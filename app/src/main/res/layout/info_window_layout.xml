@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/containerConstraintLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_balloon"
+            android:paddingBottom="7dp"
+            android:paddingTop="7dp"
+            android:paddingStart="7.5dp"
+            android:paddingEnd="7.5dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.makeramen.roundedimageview.RoundedImageView
+                android:id="@+id/spotImageView"
+                android:layout_width="190dp"
+                android:layout_height="108dp"
+                android:scaleType="centerCrop"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:riv_corner_radius_top_left="4dp"
+                app:riv_corner_radius_top_right="4dp" />
+
+            <ImageView
+                android:id="@+id/progressImageView"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/ic_icon_loading_red"
+                app:layout_constraintBottom_toBottomOf="@id/spotImageView"
+                app:layout_constraintEnd_toEndOf="@id/spotImageView"
+                app:layout_constraintStart_toStartOf="@id/spotImageView"
+                app:layout_constraintTop_toTopOf="@id/spotImageView" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
