@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">MapWithEvernote</string>
     <string name="title_activity_maps">MapWithEvernote</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="menu_mode">保存モード</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_evernote">Evernote設定</string>
+    <string name="menu_tools">Tools</string>
 </resources>
+
