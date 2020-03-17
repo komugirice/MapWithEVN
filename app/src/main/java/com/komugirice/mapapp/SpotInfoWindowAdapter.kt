@@ -1,9 +1,9 @@
-package com.example.mapapp
+package com.komugirice.mapapp
 
 import android.app.Activity
 import android.view.LayoutInflater
 import android.view.View
-import com.example.mapapp.databinding.InfoWindowLayoutBinding
+import com.komugirice.mapapp.databinding.InfoWindowLayoutBinding
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.Marker
 import com.squareup.picasso.Picasso

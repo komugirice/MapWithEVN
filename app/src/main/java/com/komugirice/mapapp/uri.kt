@@ -1,7 +1,7 @@
-package com.example.mapapp
+package com.komugirice.mapapp
 
 import android.net.Uri
-import com.example.mapapp.MyApplication.Companion.applicationContext
+import com.komugirice.mapapp.MyApplication.Companion.applicationContext
 import java.io.File
 import java.io.FileOutputStream
 

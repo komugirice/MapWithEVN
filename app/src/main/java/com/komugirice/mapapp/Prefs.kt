@@ -1,8 +1,8 @@
-package com.example.mapapp
+package com.komugirice.mapapp
 
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
-import com.example.mapapp.MyApplication.Companion.applicationContext
+import com.komugirice.mapapp.MyApplication.Companion.applicationContext
 import com.google.gson.Gson
 import io.reactivex.Observable
 

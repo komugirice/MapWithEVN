@@ -1,4 +1,4 @@
-package com.example.mapapp
+package com.komugirice.mapapp
 
 class AllImage {
     var allImage : List<ImageData> = listOf()

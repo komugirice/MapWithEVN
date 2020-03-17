@@ -1,4 +1,4 @@
-package com.example.mapapp
+package com.komugirice.mapapp
 
 import com.google.android.gms.maps.model.Marker
 import com.squareup.picasso.Callback
