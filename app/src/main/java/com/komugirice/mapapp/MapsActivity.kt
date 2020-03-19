@@ -4,13 +4,19 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -20,6 +26,11 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_maps.*
+import java.io.File
+import java.io.IOException
+import java.net.URI
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.jar.Manifest
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -31,6 +42,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var locationManager: LocationManager
     private lateinit var locationListener: LocationListener
 
+    private lateinit var currentPhotoPath: String
+    private lateinit var currentPhotoUri: Uri
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,8 +62,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 .setType("image/jpeg")
             startActivityForResult(intent, REQUEST_CODE_CHOOSE_IMAGE)
         }
-    }
 
+        cameraButton.setOnClickListener {
+            dispatchTakePictureIntent()
+        }
+    }
 
     /**
      * 現在位置情報の許可ダイアログの準備
@@ -130,6 +146,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     start(this)
                 }
             }
+
+        if(requestCode == REQUEST_CODE_CAMERA)
+            currentPhotoUri.also {
+                val file = it.makeTempFile()
+                if (file != null) {
+                    val latLng = mMap.cameraPosition.target
+                    val imageData = ImageData().apply {
+                        lat = latLng.latitude
+                        lon = latLng.longitude
+                        filePath = "file://${file.path}"
+                    }
+                    images.add(imageData)
+                    Prefs().allImage.put(AllImage().apply { allImage = images })
+                    start(this)
+                }
+            }
+                Toast.makeText(this, currentPhotoUri.toString(), Toast.LENGTH_LONG).show()
     }
 
     /**
@@ -168,7 +201,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 //                }
 //            moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBoundsBuilder.build(), 150))
             val image = images.lastOrNull()
+            // 現在位置設定
             moveCamera(CameraUpdateFactory.newLatLngZoom(if (image == null) LatLng(CURRENT_LAT, CURRENT_LON) else LatLng(image.lat, image.lon), 12F))
+            var userLocation = LatLng(CURRENT_LAT, CURRENT_LON)
+            mMap.addMarker(MarkerOptions().position(userLocation))
         }
     }
 
@@ -180,8 +216,51 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun dispatchTakePictureIntent() {
+        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            // Ensure that there's a camera activity to handle the intent
+            takePictureIntent.resolveActivity(packageManager)?.also {
+                // Create the File where the photo should go
+                val photoFile: File? = try {
+                    createImageFile()
+                } catch (ex: IOException) {
+                    // Error occurred while creating the File
+                    null
+                }
+                // Continue only if the File was successfully created
+                photoFile?.also {
+                    val photoURI: Uri = FileProvider.getUriForFile(
+                        this,
+                        this.packageName + ".provider",
+                        it
+                    )
+                    currentPhotoUri = photoURI
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                    startActivityForResult(takePictureIntent, REQUEST_CODE_CAMERA)
+                }
+            }
+        }
+    }
+
+
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        // Create an image file name
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(
+            "JPEG_${timeStamp}_", /* prefix */
+            ".jpg", /* suffix */
+            storageDir /* directory */
+        ).apply {
+            // Save a file: path for use with ACTION_VIEW intents
+            currentPhotoPath = absolutePath
+        }
+    }
+
     companion object {
         private const val REQUEST_CODE_CHOOSE_IMAGE = 1000
+        private const val REQUEST_CODE_CAMERA = 1001
         private var CURRENT_LAT: Double = 0.0
         private var CURRENT_LON: Double = 0.0
         private const val TOKYO_LAT = 35.681382
