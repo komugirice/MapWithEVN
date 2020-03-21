@@ -1,10 +1,9 @@
 package com.komugirice.mapapp
 
-import android.app.Activity
+import androidx.appcompat.app.AppCompatActivity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -14,7 +13,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -28,10 +26,8 @@ import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_maps.*
 import java.io.File
 import java.io.IOException
-import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.jar.Manifest
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -129,7 +125,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode != Activity.RESULT_OK || data == null)
+        if (resultCode != AppCompatActivity.RESULT_OK || data == null)
             return
         if (requestCode == REQUEST_CODE_CHOOSE_IMAGE)
             data.data?.also {
@@ -204,7 +200,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             // 現在位置設定
             moveCamera(CameraUpdateFactory.newLatLngZoom(if (image == null) LatLng(CURRENT_LAT, CURRENT_LON) else LatLng(image.lat, image.lon), 12F))
             var userLocation = LatLng(CURRENT_LAT, CURRENT_LON)
-            mMap.addMarker(MarkerOptions().position(userLocation))
+            mMap.addMarker(MarkerOptions().position(userLocation).title("現在地"))
         }
     }
 
@@ -267,7 +263,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         private const val TOKYO_LON = 139.76608399999998
         private const val OSAKA_LAT = 34.7024
         private const val OSAKA_LON = 135.4959
-        fun start(activity: Activity) = activity.apply {
+        fun start(activity: AppCompatActivity) = activity.apply {
             finishAffinity()
             startActivity(Intent(activity, MapsActivity::class.java))
         }
