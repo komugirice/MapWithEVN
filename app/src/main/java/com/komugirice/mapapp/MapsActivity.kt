@@ -21,7 +21,9 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_maps.*
 import java.io.File
@@ -200,7 +202,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             // 現在位置設定
             moveCamera(CameraUpdateFactory.newLatLngZoom(if (image == null) LatLng(CURRENT_LAT, CURRENT_LON) else LatLng(image.lat, image.lon), 12F))
             var userLocation = LatLng(CURRENT_LAT, CURRENT_LON)
-            mMap.addMarker(MarkerOptions().position(userLocation).title("現在地"))
+            mMap.addMarker(
+                MarkerOptions()
+                    .position(userLocation)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                    .title("現在地")
+            )
+//             mMap.setOnInfoWindowClickListener(object: GoogleMap.OnInfoWindowClickListener {
+//                 override fun onInfoWindowClick(p0: Marker?) {
+//                        p0?.showInfoWindow()
+//                 }
+//            })
         }
     }
 
