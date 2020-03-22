@@ -14,6 +14,7 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.evernote.edam.type.User
+import com.komugirice.mapapp.MyApplication.Companion.evernoteUser
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
 import com.komugirice.mapapp.task.GetUserTask
 import kotlinx.android.synthetic.main.activity_main.*
@@ -26,8 +27,6 @@ class MainActivity : AppCompatActivity() {
     // 位置
     private lateinit var locationManager: LocationManager
     private lateinit var locationListener: LocationListener
-    // evernote
-    private var mUser: User? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +43,7 @@ class MainActivity : AppCompatActivity() {
         if (isEvernoteLoggedIn) {
             if (savedInstanceState == null) {
                 GetUserTask().start(this)
-            } else mUser?.let { onGetUser(it) }
+            } else evernoteUser?.let { onGetUser(it) }
         }
     }
 
@@ -110,9 +109,9 @@ class MainActivity : AppCompatActivity() {
 
     @TaskResult
     fun onGetUser(user: User) {
-        mUser = user
+        evernoteUser = user
         if (user != null) {
-            nav_view.menu.getItem(R.id.nav_evernote_value).title = user.username
+            nav_view.menu.findItem(R.id.nav_evernote_value).title = user.username
         }
     }
 

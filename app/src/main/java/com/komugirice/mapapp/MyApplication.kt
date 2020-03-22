@@ -3,6 +3,7 @@ package com.komugirice.mapapp
 import android.app.Application
 import android.content.Context
 import com.evernote.client.android.EvernoteSession
+import com.evernote.edam.type.User
 import java.util.*
 
 class MyApplication: Application() {
@@ -53,5 +54,6 @@ class MyApplication: Application() {
     companion object {
         lateinit var applicationContext: Context
         var isEvernoteLoggedIn = false
+        var evernoteUser: User? = null
     }
 }

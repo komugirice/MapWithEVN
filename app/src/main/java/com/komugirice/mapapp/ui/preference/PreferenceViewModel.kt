@@ -3,6 +3,9 @@ package com.komugirice.mapapp.ui.preference
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.evernote.client.android.EvernoteSession
+import com.komugirice.mapapp.MyApplication.Companion.evernoteUser
+import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
 
 class PreferenceViewModel : ViewModel() {
 
@@ -10,6 +13,8 @@ class PreferenceViewModel : ViewModel() {
         value = "evernote"
     }
     val evernoteName = MutableLiveData<String>().apply {
-        value = "なし"
+        value = evernoteUser?.username ?: "なし"
     }
+
+
 }
