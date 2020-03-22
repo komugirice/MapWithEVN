@@ -1,6 +1,5 @@
 package com.komugirice.mapapp
 
-import androidx.appcompat.app.AppCompatActivity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -13,8 +12,10 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import com.evernote.edam.type.User
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -23,9 +24,11 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.komugirice.mapapp.MyApplication.Companion.isLoggedInEvernote
+import com.komugirice.mapapp.task.GetUserTask
 import kotlinx.android.synthetic.main.activity_maps.*
+import net.vrallev.android.task.TaskResult
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -42,6 +45,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var currentPhotoPath: String
     private lateinit var currentPhotoUri: Uri
+
+    private var mUser: User? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,6 +68,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         cameraButton.setOnClickListener {
             dispatchTakePictureIntent()
+        }
+
+        if(isLoggedInEvernote) {
+            if (savedInstanceState == null) {
+                GetUserTask().start(this)
+            } else mUser?.let { onGetUser(it) }
         }
     }
 
@@ -160,7 +171,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     start(this)
                 }
             }
-                Toast.makeText(this, currentPhotoUri.toString(), Toast.LENGTH_LONG).show()
+            Toast.makeText(this, currentPhotoUri.toString(), Toast.LENGTH_LONG).show()
     }
 
     /**
@@ -205,7 +216,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             mMap.addMarker(
                 MarkerOptions()
                     .position(userLocation)
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
                     .title("現在地")
             )
 //             mMap.setOnInfoWindowClickListener(object: GoogleMap.OnInfoWindowClickListener {
@@ -219,7 +229,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun initData() {
         images.addAll(Prefs().allImage.get().blockingSingle().allImage)
         images.forEach {
-            var marker = mMap.addMarker(MarkerOptions().position(LatLng(it.lat, it.lon)))
+            var marker = mMap.addMarker(
+                MarkerOptions().position(LatLng(it.lat, it.lon))
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+            )
             marker.tag = it
         }
     }
@@ -263,6 +276,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         ).apply {
             // Save a file: path for use with ACTION_VIEW intents
             currentPhotoPath = absolutePath
+        }
+    }
+
+    @TaskResult
+    fun onGetUser(user: User) {
+        mUser = user
+        if (user != null) {
+            nav_view.menu.getItem(R.id.nav_evernote_value).title = user.username
         }
     }
 

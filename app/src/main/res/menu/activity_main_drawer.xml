@@ -10,17 +10,28 @@
             android:title="@string/menu_mode" />
 
         <item
+            android:id="@+id/nav_mode_value"
+            android:title="evernote" />
+
+        <item
             android:id="@+id/nav_evernote"
             android:icon="@drawable/ic_menu_slideshow"
             android:title="@string/menu_evernote" />
+
         <item
-            android:id="@+id/nav_tools"
-            android:icon="@drawable/ic_menu_manage"
-            android:title="@string/menu_tools" />
+            android:id="@+id/nav_evernote_value"
+            android:title="なし" />
+
     </group>
 
     <item android:title="Data">
         <menu>
+
+            <item
+                android:id="@+id/nav_tools"
+                android:icon="@drawable/ic_menu_manage"
+                android:title="@string/menu_tools" />
+
             <item
                 android:id="@+id/nav_gallery"
                 android:icon="@drawable/ic_menu_gallery"
