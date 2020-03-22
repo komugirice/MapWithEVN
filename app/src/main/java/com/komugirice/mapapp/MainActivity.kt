@@ -14,7 +14,7 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.evernote.edam.type.User
-import com.komugirice.mapapp.MyApplication.Companion.isLoggedInEvernote
+import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
 import com.komugirice.mapapp.task.GetUserTask
 import kotlinx.android.synthetic.main.activity_main.*
 import net.vrallev.android.task.TaskResult
@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         initLocationListener()
 
-        if (isLoggedInEvernote) {
+        if (isEvernoteLoggedIn) {
             if (savedInstanceState == null) {
                 GetUserTask().start(this)
             } else mUser?.let { onGetUser(it) }

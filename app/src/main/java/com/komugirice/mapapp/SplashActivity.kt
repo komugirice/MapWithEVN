@@ -4,7 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.evernote.client.android.EvernoteSession
-import com.komugirice.mapapp.MyApplication.Companion.isLoggedInEvernote
+import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
 import com.komugirice.mapapp.task.GetUserTask
 
 class SplashActivity : AppCompatActivity() {
@@ -14,8 +14,8 @@ class SplashActivity : AppCompatActivity() {
         setContentView(R.layout.activity_splash)
 
         // evernoteLoginチェック
-        isLoggedInEvernote = EvernoteSession.getInstance().isLoggedIn
-        if(isLoggedInEvernote){
+        isEvernoteLoggedIn = EvernoteSession.getInstance().isLoggedIn
+        if(isEvernoteLoggedIn){
             GetUserTask().start(this)
         }
 

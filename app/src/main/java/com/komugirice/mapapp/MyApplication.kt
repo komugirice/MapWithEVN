@@ -52,6 +52,6 @@ class MyApplication: Application() {
 
     companion object {
         lateinit var applicationContext: Context
-        var isLoggedInEvernote = false
+        var isEvernoteLoggedIn = false
     }
 }
