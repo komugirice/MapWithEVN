@@ -7,5 +7,6 @@
     <string name="menu_gallery">Gallery</string>
     <string name="menu_evernote">Evernote設定</string>
     <string name="menu_preference">設定</string>
+    <string name="menu_map">地図</string>
 </resources>
 

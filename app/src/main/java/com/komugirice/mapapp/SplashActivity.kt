@@ -19,7 +19,7 @@ class SplashActivity : AppCompatActivity() {
             GetUserTask().start(this)
         }
 
-        MapsActivity.start(this)
+        MainActivity.start(this)
     }
 
     companion object {
