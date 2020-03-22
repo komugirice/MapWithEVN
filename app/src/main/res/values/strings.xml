@@ -6,6 +6,6 @@
     <string name="menu_mode">保存モード</string>
     <string name="menu_gallery">Gallery</string>
     <string name="menu_evernote">Evernote設定</string>
-    <string name="menu_tools">Tools</string>
+    <string name="menu_preference">設定</string>
 </resources>
 

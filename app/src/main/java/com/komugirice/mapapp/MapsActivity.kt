@@ -1,5 +1,6 @@
 package com.komugirice.mapapp
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -11,10 +12,17 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.view.forEach
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.navigation.findNavController
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.setupWithNavController
 import com.evernote.edam.type.User
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -25,8 +33,10 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.navigation.NavigationView
 import com.komugirice.mapapp.MyApplication.Companion.isLoggedInEvernote
 import com.komugirice.mapapp.task.GetUserTask
+import com.komugirice.mapapp.ui.preference.PreferenceActivity
 import kotlinx.android.synthetic.main.activity_maps.*
 import net.vrallev.android.task.TaskResult
 import java.io.File
@@ -38,14 +48,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private var images = mutableListOf<ImageData>()
-
+    // 位置
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationManager: LocationManager
     private lateinit var locationListener: LocationListener
-
+    // 写真
     private lateinit var currentPhotoPath: String
     private lateinit var currentPhotoUri: Uri
-
+    // drawer
+    private lateinit var appBarConfiguration: AppBarConfiguration
+    // evernote
     private var mUser: User? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,6 +71,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         locationManager = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         initLocationListener()
 
+        // navigation
+//        val navController = findNavController(R.id.nav_host_fragment)
+//        nav_view.setupWithNavController(navController)
+//        appBarConfiguration = AppBarConfiguration(navController.graph, drawer_layout)
+
+        nav_view.setNavigationItemSelectedListener(object: NavigationView.OnNavigationItemSelectedListener{
+            override fun onNavigationItemSelected(p0: MenuItem): Boolean {
+                if(p0.itemId == R.id.nav_preference) {
+                    PreferenceActivity.start(this@MapsActivity)
+                }
+                return true
+            }
+        })
+
         photoButton.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)
@@ -70,7 +96,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             dispatchTakePictureIntent()
         }
 
-        if(isLoggedInEvernote) {
+        if (isLoggedInEvernote) {
             if (savedInstanceState == null) {
                 GetUserTask().start(this)
             } else mUser?.let { onGetUser(it) }
