@@ -14,8 +14,19 @@ android {
         versionCode rootProject.ext.VERSION_CODE
         versionName rootProject.ext.VERSION_NAME
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        def properties = new Properties()
+        properties.load(rootProject.file('key.properties').newDataInputStream())
+        // local.propertiesのapi_keyに定義されている値を読み込む
+        def CONSUMER_KEY = properties.getProperty("counsumer_key")
+        def CONSUMER_SECRET = properties.getProperty("counsumer_secret")
+        // ついでにbuildConfigFieldに定義
+        buildConfigField("String", "CONSUMER_KEY", "\"${CONSUMER_KEY}\"")
+        buildConfigField("String", "CONSUMER_SECRET", "\"${CONSUMER_SECRET}\"")
     }
+
     apply from: 'signingConfigs/debug.gradle', to: android
+    apply from: 'signingConfigs/release.gradle', to: android
     buildTypes {
         debug {
             debuggable true
@@ -23,6 +34,8 @@ android {
         }
         release {
             minifyEnabled false
+            minifyEnabled true
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
