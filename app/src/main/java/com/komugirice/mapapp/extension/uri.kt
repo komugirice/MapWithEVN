@@ -1,10 +1,13 @@
-package com.komugirice.mapapp
+package com.komugirice.mapapp.extension
 
 import android.net.Uri
 import com.komugirice.mapapp.MyApplication.Companion.applicationContext
 import java.io.File
 import java.io.FileOutputStream
 
+/**
+ * @author Jane
+ */
 fun Uri.makeTempFile(): File? {
     val fileName = "${System.currentTimeMillis()}"
     val file = File.createTempFile(fileName, ".temp", applicationContext.cacheDir)
