@@ -57,9 +57,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="left"
-        android:textColor="@color/gray"
+        android:textColor="@color/royal_blue"
         android:textSize="16sp"
-        android:text="なし"
+        android:text="@string/none"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/evernoteLabel" />
@@ -73,5 +73,40 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/evernoteValue" />
+
+    <TextView
+        android:id="@+id/notebookLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="left"
+        android:text="@string/notebook_label"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/evernoteLine" />
+
+    <TextView
+        android:id="@+id/notebookValue"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="left"
+        android:textColor="@color/royal_blue"
+        android:textSize="16sp"
+        android:text="@string/none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/notebookLabel" />
+
+    <TextView
+        android:id="@+id/notebookLine"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/gainsboro"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/notebookValue" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

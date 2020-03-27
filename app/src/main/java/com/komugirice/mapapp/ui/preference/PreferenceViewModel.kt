@@ -6,7 +6,11 @@ import androidx.lifecycle.ViewModel
 import com.evernote.client.android.EvernoteSession
 import com.komugirice.mapapp.MyApplication.Companion.evernoteUser
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
+import com.komugirice.mapapp.Prefs
 
+/**
+ * @author komugirice
+ */
 class PreferenceViewModel : ViewModel() {
 
     val mode = MutableLiveData<String>().apply {
@@ -14,6 +18,9 @@ class PreferenceViewModel : ViewModel() {
     }
     val evernoteName = MutableLiveData<String>().apply {
         value = evernoteUser?.username ?: "なし"
+    }
+    val notebookName = MutableLiveData<String>().apply {
+        value = Prefs().notebookName.get().blockingSingle()
     }
 
 

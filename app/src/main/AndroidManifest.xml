@@ -31,7 +31,10 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-        <activity android:name=".ui.preference.PreferenceFragment"></activity>
+        <activity
+            android:name=".ui.preference.PreferenceFragment"
+            android:screenOrientation="portrait">
+        </activity>
         <activity android:name=".SplashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -41,7 +44,12 @@
         </activity>
         <activity
             android:name=".MainActivity"
-            android:label="@string/title_activity_maps">
+            android:label="@string/title_activity_maps"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity
+            android:name=".ui.notebook.NotebookNameActivity"
+            android:screenOrientation="portrait">
         </activity>
 
         <provider

@@ -14,10 +14,14 @@ import com.komugirice.mapapp.MyApplication
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
 import com.komugirice.mapapp.R
 import com.komugirice.mapapp.task.GetUserTask
+import com.komugirice.mapapp.ui.notebook.NotebookNameActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_preference.*
 import net.vrallev.android.task.TaskResult
 
+/**
+ * @author komugirice
+ */
 class PreferenceFragment: Fragment() {
 
     private lateinit var preferenceViewModel: PreferenceViewModel
@@ -36,6 +40,9 @@ class PreferenceFragment: Fragment() {
                 })
                 evernoteName.observe(this@PreferenceFragment, Observer {
                     evernoteValue.text = it
+                })
+                notebookName.observe(this@PreferenceFragment, Observer {
+                    notebookValue.text = it
                 })
             }
         val root = inflater.inflate(R.layout.fragment_preference, container, false)
@@ -62,6 +69,9 @@ class PreferenceFragment: Fragment() {
         evernoteValue.setOnClickListener {
 //            if(!isEvernoteLoggedIn)
                 EvernoteSession.getInstance().authenticate(this.activity)
+        }
+        notebookValue.setOnClickListener {
+            NotebookNameActivity.start(this.activity)
         }
     }
 

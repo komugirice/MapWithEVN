@@ -8,5 +8,9 @@
     <string name="menu_evernote">Evernote設定</string>
     <string name="menu_preference">設定</string>
     <string name="menu_map">地図</string>
+    <!-- fragment_preference-->
+    <string name="notebook_label">ノートブック</string>
+    <string name="none">なし</string>
+    <string name="save_button">登録</string>
 </resources>
 
