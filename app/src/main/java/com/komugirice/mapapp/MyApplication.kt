@@ -6,6 +6,9 @@ import com.evernote.client.android.EvernoteSession
 import com.evernote.edam.type.User
 import java.util.*
 
+/**
+ * @author komugirice
+ */
 class MyApplication: Application() {
 
     /*

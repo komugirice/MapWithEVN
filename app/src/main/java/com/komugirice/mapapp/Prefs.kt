@@ -5,10 +5,15 @@ import android.preference.PreferenceManager
 import com.komugirice.mapapp.MyApplication.Companion.applicationContext
 import com.google.gson.Gson
 import io.reactivex.Observable
+import timber.log.Timber
 
+/**
+ * @author Jane
+ */
 class Prefs {
 
     var allImage = AllImageEntry("allImages")
+    val notebookName by lazy { StringEntry("notebookName")}
 
     interface Entry<T> {
         fun put(value: T)
@@ -32,6 +37,24 @@ class Prefs {
         }
 
         override fun remove() = getSharedPreference().edit().remove(key).apply()
+    }
+
+    class StringEntry(private val key: String, private val defaultValue: String = "") : Entry<String> {
+        override fun put(value: String) {
+            Timber.d("put $key -> $value")
+            getSharedPreference().edit().putString(key, value).apply()
+        }
+
+        override fun get(): Observable<String> {
+            return createObservable(getSharedPreference(), key) {
+                it.getString(key, defaultValue) ?: defaultValue
+            }.onErrorReturn {
+                defaultValue
+            }
+        }
+
+        override fun remove() = getSharedPreference().edit().remove(key).apply()
+
     }
 
     class EntryNotFoundException : Exception {

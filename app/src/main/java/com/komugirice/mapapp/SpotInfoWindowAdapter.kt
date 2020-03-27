@@ -6,8 +6,12 @@ import android.view.View
 import com.komugirice.mapapp.databinding.InfoWindowLayoutBinding
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.Marker
+import com.komugirice.mapapp.extension.visible
 import com.squareup.picasso.Picasso
 
+/**
+ * @author Jane
+ */
 class SpotInfoWindowAdapter(private val activity: Activity?, spotIds: List<Long>): GoogleMap.InfoWindowAdapter {
 
     private val infoWindowLayoutBinding: InfoWindowLayoutBinding =

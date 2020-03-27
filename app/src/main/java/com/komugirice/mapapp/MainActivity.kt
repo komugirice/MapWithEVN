@@ -8,18 +8,25 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
+import com.evernote.edam.type.Notebook
 import com.evernote.edam.type.User
+import com.google.gson.Gson
 import com.komugirice.mapapp.MyApplication.Companion.evernoteUser
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
+import com.komugirice.mapapp.task.FindNotebooksTask
 import com.komugirice.mapapp.task.GetUserTask
 import kotlinx.android.synthetic.main.activity_main.*
 import net.vrallev.android.task.TaskResult
 
+/**
+ * @author komugirice
+ */
 class MainActivity : AppCompatActivity() {
 
     // drawer
@@ -43,7 +50,10 @@ class MainActivity : AppCompatActivity() {
         if (isEvernoteLoggedIn) {
             if (savedInstanceState == null) {
                 GetUserTask().start(this)
-            } else evernoteUser?.let { onGetUser(it) }
+                FindNotebooksTask().start(this, "personal");
+            } else {
+                evernoteUser?.let { onGetUser(it) }
+            }
         }
     }
 
@@ -112,6 +122,14 @@ class MainActivity : AppCompatActivity() {
         evernoteUser = user
         if (user != null) {
             nav_view.menu.findItem(R.id.nav_evernote_value).title = user.username
+        }
+    }
+
+    @TaskResult(id = "personal")
+    fun onFindNotebooks(notebooks: List<Notebook?>?) {
+        if (notebooks == null || notebooks.isEmpty()) {
+        } else {
+            Log.d("onFindNotebooks", "${Gson().toJson(notebooks)}")
         }
     }
 

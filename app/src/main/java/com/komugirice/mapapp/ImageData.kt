@@ -1,5 +1,8 @@
 package com.komugirice.mapapp
 
+/**
+ * @author Jane
+ */
 class AllImage {
     var allImage : List<ImageData> = listOf()
 }

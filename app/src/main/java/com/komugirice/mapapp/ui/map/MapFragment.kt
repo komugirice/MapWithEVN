@@ -25,13 +25,16 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.applicationContext
-import kotlinx.android.synthetic.main.fragment_map.*
+import com.komugirice.mapapp.extension.makeTempFile
 import kotlinx.android.synthetic.main.fragment_map.view.*
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * @author komugirice
+ */
 class MapFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
