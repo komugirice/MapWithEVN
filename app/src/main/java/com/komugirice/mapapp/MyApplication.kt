@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.evernote.client.android.EvernoteSession
 import com.evernote.edam.type.User
+import com.komugirice.mapapp.enums.Mode
 import java.util.*
 
 /**
@@ -58,5 +59,6 @@ class MyApplication: Application() {
         lateinit var applicationContext: Context
         var isEvernoteLoggedIn = false
         var evernoteUser: User? = null
+        var mode: Mode? = null
     }
 }

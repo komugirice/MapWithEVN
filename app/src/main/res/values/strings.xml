@@ -14,5 +14,6 @@
     <string name="save_button">登録</string>
     <string name="mode_cache">アプリ内キャッシュ</string>
     <string name="mode_evernote">Evernote</string>
+    <string name="evernote_label">Evernote連携ユーザ</string>
 </resources>
 

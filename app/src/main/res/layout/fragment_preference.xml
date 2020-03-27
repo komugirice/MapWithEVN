@@ -27,25 +27,13 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="left"
-            android:text="モード"
+            android:text="@string/menu_mode"
             android:textColor="@android:color/black"
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!--
-        <TextView
-            android:id="@+id/modeValue"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:gravity="left"
-            android:textColor="@color/royal_blue"
-            android:textSize="16sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/modeLabel" />
-        -->
         <Spinner
             android:id="@+id/modeValue"
             android:layout_width="wrap_content"
@@ -53,7 +41,6 @@
             android:textSize="16sp"
             android:gravity="left"
             android:layout_marginTop="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/modeLabel" />
 
@@ -73,7 +60,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="left"
-            android:text="エバーノート連携"
+            android:text="@string/evernote_label"
             android:textColor="@android:color/black"
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"

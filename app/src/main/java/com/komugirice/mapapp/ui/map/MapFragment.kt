@@ -25,6 +25,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.applicationContext
+import com.komugirice.mapapp.MyApplication.Companion.mode
+import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.makeTempFile
 import kotlinx.android.synthetic.main.fragment_map.view.*
 import java.io.File
@@ -88,6 +90,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode != AppCompatActivity.RESULT_OK || data == null)
             return
+        // 写真選択
         if (requestCode == REQUEST_CODE_CHOOSE_IMAGE)
             data.data?.also {
                 val file = it.makeTempFile()
@@ -98,12 +101,16 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         lon = latLng.longitude
                         filePath = "file://${file.path}"
                     }
-                    images.add(imageData)
-                    Prefs().allImage.put(AllImage().apply { allImage = images })
+                    if (mode == Mode.CACHE) {
+                        images.add(imageData)
+                        Prefs().allImage.put(AllImage().apply { allImage = images })
+                    } else if (mode == Mode.EVERNOTE) {
+
+                    }
                     start(context)
                 }
             }
-
+        // カメラ
         if(requestCode == REQUEST_CODE_CAMERA)
             currentPhotoUri.also {
                 val file = it.makeTempFile()
@@ -175,14 +182,22 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun initData() {
-        images.addAll(Prefs().allImage.get().blockingSingle().allImage)
-        images.forEach {
-            var marker = mMap.addMarker(
-                MarkerOptions().position(LatLng(it.lat, it.lon))
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-            )
-            marker.tag = it
+        // アプリ内キャッシュ
+        if (mode == Mode.CACHE) {
+            images.addAll(Prefs().allImage.get().blockingSingle().allImage)
+            images.forEach {
+                var marker = mMap.addMarker(
+                    MarkerOptions().position(LatLng(it.lat, it.lon))
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                )
+                marker.tag = it
+            }
         }
+        // TODO Evernote
+        if (mode == Mode.EVERNOTE) {
+
+        }
+
     }
 
     private fun dispatchTakePictureIntent() {

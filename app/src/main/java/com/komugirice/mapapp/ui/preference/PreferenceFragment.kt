@@ -2,13 +2,11 @@ package com.komugirice.mapapp.ui.preference
 
 
 import android.os.Bundle
-import android.provider.CalendarContract.Colors
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -80,20 +78,19 @@ class PreferenceFragment: Fragment() {
     }
 
     private fun initSpinner(){
-        var adapter: ArrayAdapter<Mode>
-        var modeList = mutableListOf<Mode>().apply {
-            add(Mode.CACHE)
-            add(Mode.EVERNOTE)
-        }
+        var adapter: ArrayAdapter<String>
+        var modeList = Mode.values().map {it.modeName}
         context?.apply {
-            adapter = ArrayAdapter<Mode>(
-                this, R.layout.row_spinner, Mode.values()
+            adapter = ArrayAdapter<String>(
+                this, R.layout.spinner_item, modeList
             )
+            adapter.setDropDownViewResource(R.layout.spinner_dropdown_item)
 
             modeValue.apply {
 
                 this.adapter = adapter
                 this.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                    // 選択変更時
                     override fun onItemSelected(
                         adapterView: AdapterView<*>?,
                         view: View?,
@@ -102,6 +99,7 @@ class PreferenceFragment: Fragment() {
                     ) {
                         val selected: Mode = Mode.values().get(position)
                         preferenceViewModel.mode.value = selected
+                        MyApplication.mode = selected   // グローバルデータ更新
                         Prefs().mode.put(position)
                     }
 
@@ -115,7 +113,7 @@ class PreferenceFragment: Fragment() {
 
     private fun initClick(){
         backImageView.setOnClickListener {
-            MapFragment.start(context)
+            getFragmentManager()?.popBackStack()
         }
         evernoteValue.setOnClickListener {
 //            if(!isEvernoteLoggedIn)
