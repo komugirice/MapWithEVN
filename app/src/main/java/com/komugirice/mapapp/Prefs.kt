@@ -13,6 +13,7 @@ import timber.log.Timber
 class Prefs {
 
     var allImage = AllImageEntry("allImages")
+    val mode by lazy{ IntEntry("mode")}
     val notebookName by lazy { StringEntry("notebookName")}
 
     interface Entry<T> {
@@ -55,6 +56,24 @@ class Prefs {
 
         override fun remove() = getSharedPreference().edit().remove(key).apply()
 
+    }
+
+    class IntEntry(private val key: String, private val defaultValue: Int = 0) : Entry<Int> {
+        override fun put(value: Int) {
+            Timber.d("put $key -> $value")
+            getSharedPreference().edit().putInt(key, value).apply()
+        }
+
+        override fun get(): Observable<Int> {
+            return createObservable(getSharedPreference(), key) {
+                it.getInt(key, defaultValue)
+            }.onErrorReturn {
+                put(defaultValue)
+                defaultValue
+            }
+        }
+
+        override fun remove() = getSharedPreference().edit().remove(key).apply()
     }
 
     class EntryNotFoundException : Exception {

@@ -12,5 +12,7 @@
     <string name="notebook_label">ノートブック</string>
     <string name="none">なし</string>
     <string name="save_button">登録</string>
+    <string name="mode_cache">アプリ内キャッシュ</string>
+    <string name="mode_evernote">Evernote</string>
 </resources>
 

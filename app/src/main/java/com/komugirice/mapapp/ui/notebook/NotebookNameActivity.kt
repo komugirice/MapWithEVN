@@ -54,7 +54,7 @@ class NotebookNameActivity : AppCompatActivity() {
         // notebook取得
         FindNotebooksTask().start(this, "personal");
 
-        // onFindNotebooks実行結果
+        // onFindNotebooksの監視
         mutableIsUpdate.observe(this, Observer{
             if(it == true) {
                 // preferenceに登録
