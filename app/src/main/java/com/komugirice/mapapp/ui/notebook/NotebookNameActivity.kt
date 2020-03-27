@@ -3,13 +3,23 @@ package com.komugirice.mapapp.ui.notebook
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import com.evernote.edam.type.Notebook
+import com.google.gson.Gson
 import com.komugirice.mapapp.Prefs
 import com.komugirice.mapapp.R
+import com.komugirice.mapapp.task.FindNotebooksTask
 import kotlinx.android.synthetic.main.activity_header.*
 import kotlinx.android.synthetic.main.activity_notebook_name.*
+import net.vrallev.android.task.TaskResult
 
 class NotebookNameActivity : AppCompatActivity() {
+
+    var mutableIsUpdate = MutableLiveData<Boolean>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,19 +46,37 @@ class NotebookNameActivity : AppCompatActivity() {
         }
 
         saveButton.setOnClickListener {
-            if(notebookNameEditText.text.isNotEmpty())
-                update()
-                finish()
+            update()
         }
     }
 
     private fun update() {
-        val notebookName = notebookNameEditText.text.toString().trim()
+        // notebook取得
+        FindNotebooksTask().start(this, "personal");
 
-        // notebookの存在チェック
+        // onFindNotebooks実行結果
+        mutableIsUpdate.observe(this, Observer{
+            if(it == true) {
+                // preferenceに登録
+                val notebookName = notebookNameEditText.text.toString().trim()
+                Prefs().notebookName.put(notebookName)
+                finish()
+            } else {
+                Toast.makeText(this, "ノートブック名が存在しません", Toast.LENGTH_LONG).show()
+            }
+        })
+    }
 
-        // preferenceに登録
-        Prefs().notebookName.put(notebookName)
+    @TaskResult(id = "personal")
+    fun onFindNotebooksNotebook(notebooks: List<Notebook?>?) {
+        val text = notebookNameEditText.text.toString()
+        notebooks?.forEach {
+            if(it != null && it?.name == text) {
+                mutableIsUpdate.postValue(true)
+                return
+            }
+        }
+        mutableIsUpdate.postValue(false)
     }
 
     companion object {

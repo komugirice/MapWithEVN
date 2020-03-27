@@ -23,5 +23,12 @@ class PreferenceViewModel : ViewModel() {
         value = Prefs().notebookName.get().blockingSingle()
     }
 
+    fun initData() {
+        evernoteName.value = evernoteUser?.username ?: "なし"
+
+        val prefName = Prefs().notebookName.get().blockingSingle()
+        notebookName.value = prefName
+    }
+
 
 }

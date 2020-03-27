@@ -63,6 +63,8 @@ class PreferenceFragment: Fragment() {
         if(isEvernoteLoggedIn){
             GetUserTask().start(this)
         }
+
+        preferenceViewModel.initData()
     }
 
     private fun initClick(){
