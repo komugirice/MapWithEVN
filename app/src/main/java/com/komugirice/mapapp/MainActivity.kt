@@ -17,6 +17,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.evernote.edam.type.Notebook
 import com.evernote.edam.type.User
 import com.google.gson.Gson
+import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.evernoteUser
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
 import com.komugirice.mapapp.task.FindNotebooksTask
@@ -129,7 +130,14 @@ class MainActivity : AppCompatActivity() {
     fun onFindNotebooks(notebooks: List<Notebook?>?) {
         if (notebooks == null || notebooks.isEmpty()) {
         } else {
-            Log.d("onFindNotebooks", "${Gson().toJson(notebooks)}")
+            val targetName =  Prefs().notebookName.get().blockingSingle()
+            if(targetName.isNotEmpty())
+                notebooks?.forEach {
+                    if(it != null && it?.name == targetName) {
+                        evNotebook = it
+                        return
+                    }
+                }
         }
     }
 

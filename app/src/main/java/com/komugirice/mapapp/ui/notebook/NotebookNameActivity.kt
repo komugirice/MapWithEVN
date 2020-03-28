@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.evernote.edam.type.Notebook
 import com.google.gson.Gson
+import com.komugirice.mapapp.MyApplication
 import com.komugirice.mapapp.Prefs
 import com.komugirice.mapapp.R
 import com.komugirice.mapapp.task.FindNotebooksTask
@@ -72,6 +73,7 @@ class NotebookNameActivity : AppCompatActivity() {
         val text = notebookNameEditText.text.toString()
         notebooks?.forEach {
             if(it != null && it?.name == text) {
+                MyApplication.evNotebook = it // グローバル変数のノートブック更新
                 mutableIsUpdate.postValue(true)
                 return
             }

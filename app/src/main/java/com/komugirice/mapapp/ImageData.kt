@@ -11,5 +11,6 @@ class ImageData {
     var lat = 0.0
     var lon = 0.0
     var filePath = ""
+    var address = ""
     var id = System.currentTimeMillis()
 }
