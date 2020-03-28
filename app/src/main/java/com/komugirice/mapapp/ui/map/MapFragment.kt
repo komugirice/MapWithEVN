@@ -18,6 +18,8 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import com.evernote.client.android.EvernoteSession
 import com.evernote.client.android.EvernoteUtil
+import com.evernote.edam.notestore.NoteFilter
+import com.evernote.edam.notestore.NotesMetadataResultSpec
 import com.evernote.edam.type.Note
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -38,9 +40,9 @@ import com.komugirice.mapapp.extension.extractPostalCodeAndAddress
 import com.komugirice.mapapp.extension.makeTempFile
 import com.komugirice.mapapp.task.CreateNewNoteTask
 import kotlinx.android.synthetic.main.fragment_map.view.*
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers.Main
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -59,6 +61,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     // 写真
     private lateinit var currentPhotoPath: String
     private lateinit var currentPhotoUri: Uri
+
+    private val noteStoreClient = EvernoteSession.getInstance().evernoteClientFactory.noteStoreClient
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -169,17 +173,55 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     }
 
+    /**
+     * evernoteノート作成
+     */
     private fun createNote(title: String) {
-        val note = Note()
-        note.title = title
-        note.content = EvernoteUtil.NOTE_PREFIX
-        note.content += EvernoteUtil.NOTE_SUFFIX;
-        evNotebook?.guid.apply {
-            note.notebookGuid = this
-        }
+        var getNote: Note?
+        // IOスレッド
         CoroutineScope(IO).launch {
-            EvernoteSession.getInstance().evernoteClientFactory.noteStoreClient.createNote(note)
+            var deferred: Deferred<String?> = async(IO) { getNoteGuid(title) }
+            val guid = deferred.await()
+
+
+            try {
+                getNote = noteStoreClient.getNote(guid, true, true, false, false)
+
+            } catch (e: Exception) {
+                // ノートが見つからないので新規作成
+                // ノートを作成
+                val note = Note()
+                note.title = title
+                note.content = EvernoteUtil.NOTE_PREFIX
+                note.content += EvernoteUtil.NOTE_SUFFIX;
+                evNotebook?.guid.apply {
+                    note.notebookGuid = this
+                }
+                noteStoreClient.createNote(note)
+                return@launch
+            }
+            // ノートが見つかったので更新
+            getNote?.content
+
+            noteStoreClient.updateNote(getNote)
+
+
         }
+    }
+
+    /**
+     * evernoteノートのguid取得
+     */
+    private fun getNoteGuid(name: String): String?{
+        var guid: String? = null
+            val filter = NoteFilter()
+        filter.words = name
+
+        val resultSpec = NotesMetadataResultSpec()
+        resultSpec.setIncludeTitleIsSet(true)
+
+        return noteStoreClient.findNotesMetadata(filter, 0, 1, null).notes.firstOrNull()?.guid
+
     }
 
     /**

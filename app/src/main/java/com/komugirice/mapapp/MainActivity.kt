@@ -143,7 +143,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         fun start(activity: AppCompatActivity) = activity.apply {
-            finishAffinity()
+            //finishAffinity()
             startActivity(Intent(activity, MainActivity::class.java))
         }
     }
