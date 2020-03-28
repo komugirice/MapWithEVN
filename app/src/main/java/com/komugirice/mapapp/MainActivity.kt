@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
 
         if (Build.VERSION.SDK_INT < 23) {
             try {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5.5f, locationListener)
             } catch(e: SecurityException){
             }
         } else {
@@ -90,7 +90,7 @@ class MainActivity : AppCompatActivity() {
                 != PackageManager.PERMISSION_GRANTED) {
                 this.requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1)
             } else {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5.5f, locationListener)
             }
         }
     }

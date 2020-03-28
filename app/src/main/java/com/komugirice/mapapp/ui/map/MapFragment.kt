@@ -2,11 +2,13 @@ package com.komugirice.mapapp.ui.map
 
 import android.content.Context
 import android.content.Intent
+import android.location.Geocoder
 import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,10 +25,12 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.gson.Gson
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.applicationContext
 import com.komugirice.mapapp.MyApplication.Companion.mode
 import com.komugirice.mapapp.enums.Mode
+import com.komugirice.mapapp.extension.extractPostalCodeAndAddress
 import com.komugirice.mapapp.extension.makeTempFile
 import kotlinx.android.synthetic.main.fragment_map.view.*
 import java.io.File
@@ -101,13 +105,21 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         lon = latLng.longitude
                         filePath = "file://${file.path}"
                     }
+                    // TODO ロケーション取得
+                    val address = Geocoder(context, Locale.JAPAN)
+                        .getFromLocation(latLng.latitude, latLng.longitude, 1)
+                        .get(0)
+                        .getAddressLine(0)
+                        .extractPostalCodeAndAddress()
+
                     if (mode == Mode.CACHE) {
                         images.add(imageData)
                         Prefs().allImage.put(AllImage().apply { allImage = images })
                     } else if (mode == Mode.EVERNOTE) {
 
                     }
-                    start(context)
+                    //start(context)
+                    refresh()
                 }
             }
         // カメラ
@@ -121,12 +133,18 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         lon = latLng.longitude
                         filePath = "file://${file.path}"
                     }
-                    images.add(imageData)
-                    Prefs().allImage.put(AllImage().apply { allImage = images })
-                    start(context)
+                    if (mode == Mode.CACHE) {
+                        images.add(imageData)
+                        Prefs().allImage.put(AllImage().apply { allImage = images })
+                    } else if (mode == Mode.EVERNOTE) {
+
+                    }
+                    //start(context)
+                    refresh()
                 }
+                //Toast.makeText(context, currentPhotoUri.toString(), Toast.LENGTH_LONG).show()
             }
-            Toast.makeText(context, currentPhotoUri.toString(), Toast.LENGTH_LONG).show()
+
     }
 
     /**
@@ -241,6 +259,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         ).apply {
             // Save a file: path for use with ACTION_VIEW intents
             currentPhotoPath = absolutePath
+        }
+    }
+
+    private fun refresh() {
+        fragmentManager?.apply{
+            val trans = this.beginTransaction()
+            trans.detach(this@MapFragment)
+            trans.attach(this@MapFragment)
+            trans.commit()
         }
     }
 

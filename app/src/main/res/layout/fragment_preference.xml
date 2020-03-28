@@ -29,7 +29,7 @@
             android:gravity="left"
             android:text="@string/menu_mode"
             android:textColor="@android:color/black"
-            android:textSize="18sp"
+            android:textSize="@dimen/sp_m"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -62,7 +62,7 @@
             android:gravity="left"
             android:text="@string/evernote_label"
             android:textColor="@android:color/black"
-            android:textSize="18sp"
+            android:textSize="@dimen/sp_m"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/modeLine" />
@@ -74,7 +74,7 @@
             android:gravity="left"
             android:text="@string/none"
             android:textColor="@color/royal_blue"
-            android:textSize="16sp"
+            android:textSize="@dimen/sp_m"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/evernoteLabel" />
@@ -97,7 +97,7 @@
             android:gravity="left"
             android:text="@string/notebook_label"
             android:textColor="@android:color/black"
-            android:textSize="18sp"
+            android:textSize="@dimen/sp_m"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/evernoteLine" />
@@ -109,7 +109,7 @@
             android:gravity="left"
             android:text="@string/none"
             android:textColor="@color/royal_blue"
-            android:textSize="16sp"
+            android:textSize="@dimen/sp_m"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/notebookLabel" />
