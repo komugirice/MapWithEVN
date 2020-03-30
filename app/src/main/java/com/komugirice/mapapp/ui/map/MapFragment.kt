@@ -48,15 +48,16 @@ import com.komugirice.mapapp.task.FindNotesTask
 import kotlinx.android.synthetic.main.fragment_map.view.*
 import kotlinx.android.synthetic.main.fragment_preference.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.vrallev.android.task.TaskResult
-import java.io.BufferedInputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.IOException
+import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.coroutines.CoroutineContext
 
 /**
  * @author komugirice
@@ -255,7 +256,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
         // TODO Evernote
         if (mode == Mode.EVERNOTE) {
-
+            // ノート検索タスク実行
+            FindNotesTask(0,250, evNotebook, null, null).start(this@MapFragment, "onInitFindNotes")
         }
 
     }
@@ -301,6 +303,50 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         ).apply {
             // Save a file: path for use with ACTION_VIEW intents
             currentPhotoPath = absolutePath
+        }
+    }
+
+    /**
+     * 初期表示時Evernoteのノート新規作成or更新
+     * ※FindNotesTask後にcallback
+     */
+    @TaskResult(id = "onInitFindNotes")
+    fun onInitFindNotes(noteRefList: List<NoteRef>?) {
+        CoroutineScope(IO).launch {
+
+            noteRefList?.forEach {
+
+                val note = it.loadNote(true, true, false, false)
+                val resources = note.resources
+
+                withContext(Dispatchers.Main){
+                    resources.forEach {
+                        val newFile: File? = try {
+                            createImageFile()
+                        } catch (ex: IOException) {
+                            // Error occurred while creating the File
+                            null
+                        }
+                        newFile?.apply{
+                            writeBytes(it.data.body)
+                            var marker = mMap.addMarker(
+                                MarkerOptions().position(LatLng(it.attributes.latitude, it.attributes.longitude))
+                                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                            )
+                            // ImageData
+                            val imageData = ImageData().apply {
+                                lat = it.attributes.latitude
+                                lon = it.attributes.longitude
+                                filePath = "file://${newFile.path}"
+                                this.address = note.title
+                            }
+                            marker.tag = imageData
+                        }
+                    }
+                }
+
+            }
+
         }
     }
 
