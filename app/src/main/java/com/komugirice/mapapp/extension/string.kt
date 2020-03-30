@@ -462,6 +462,15 @@ fun String.extractPostalCodeAndAddress(): String {
 }
 
 /**
+ * 文字列から郵便番号を抽出する
+ *  * @return 郵便番号
+ */
+fun String.extractPostalCode(): String {
+     val extract =  "〒[0-9]{3}-[0-9]{4}".toRegex().find(this)?.value ?: ""
+     return extract
+}
+
+/**
  * 画像タイプの拡張子チェック
  * @return 画像拡張子の有無
  */

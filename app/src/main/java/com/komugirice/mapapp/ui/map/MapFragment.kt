@@ -41,6 +41,7 @@ import com.komugirice.mapapp.MyApplication.Companion.applicationContext
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.mode
 import com.komugirice.mapapp.enums.Mode
+import com.komugirice.mapapp.extension.extractPostalCode
 import com.komugirice.mapapp.extension.extractPostalCodeAndAddress
 import com.komugirice.mapapp.extension.makeTempFile
 import com.komugirice.mapapp.task.FindNotesTask
@@ -62,6 +63,8 @@ import java.util.*
  */
 class MapFragment : Fragment(), OnMapReadyCallback {
 
+    private var helper = MapFragmentHelper
+
     private lateinit var mMap: GoogleMap
     private var images = mutableListOf<ImageData>()
     // 位置
@@ -73,12 +76,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     private val noteStoreClient = EvernoteSession.getInstance().evernoteClientFactory.noteStoreClient
 
-    private class EvNote {
-        var title: String = ""
-        var resource: Resource = Resource()
-
-        fun clear(){ title = ""; resource = Resource() }
-    }
     private var evNote = EvNote()
 
     override fun onCreateView(
@@ -89,6 +86,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         val root = inflater.inflate(R.layout.fragment_map,container, false)
 
+        // 写真ボタンクリック時
         root.photoButton.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)
@@ -96,6 +94,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             startActivityForResult(intent, REQUEST_CODE_CHOOSE_IMAGE)
         }
 
+        // カメラボタンクリック時
         root.cameraButton.setOnClickListener {
             dispatchTakePictureIntent()
         }
@@ -129,11 +128,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 val imageFile = it.makeTempFile()
                 if (imageFile != null) {
                     val latLng = mMap.cameraPosition.target
-                    val address = Geocoder(context, Locale.JAPAN)
-                        .getFromLocation(latLng.latitude, latLng.longitude, 1)
-                        .get(0)
-                        .getAddressLine(0)
-                        .extractPostalCodeAndAddress()
+                    val address = helper.getAddress(context, latLng)
+
                     val imageData = ImageData().apply {
                         lat = latLng.latitude
                         lon = latLng.longitude
@@ -145,36 +141,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     if (mode == Mode.CACHE) {
                         images.add(imageData)
                         Prefs().allImage.put(AllImage().apply { allImage = images })
+
                     } else if (mode == Mode.EVERNOTE) {
-
-                        // Hash the data in the image file. The hash is used to reference the file in the ENML note content.
-                        var `in` = BufferedInputStream(FileInputStream(imageFile.getPath()))
-                        val data = FileData(EvernoteUtil.hash(`in`), File(imageFile.getPath()))
-
-                        val opts = BitmapFactory.Options()
-                        opts.inJustDecodeBounds = true;
-                        BitmapFactory.decodeFile(File(imageFile.path).absolutePath, opts)
-
-                        val attributes = ResourceAttributes()
-                        attributes.fileName = imageFile.name
-                        attributes.longitude = imageData.lon
-                        attributes.latitude = imageData.lat
-
                         evNotebook?.apply {
-                            // クラス変数evNote設定
-                            evNote.title = address
-
-                            evNote.resource.apply{
-                                this.data = data
-                                //height = opts.outHeight.toShort()
-                                //width = opts.outWidth.toShort()
-                                mime = "image/jpg"
-                                this.attributes = attributes
-                            }
-
-
+                            // ノート情報設定
+                            evNote = helper.createEvNote(imageFile, latLng, address)
                             // ノート検索タスク実行
-                            FindNotesTask(0,250, evNotebook, null, null).start(this@MapFragment)
+                            FindNotesTask(0,250, evNotebook, null, null).start(this@MapFragment, "onFindNotesAndCreateOrUpdate")
                         } ?: run {
                             // ノートブック存在エラー
                             Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG).show()
@@ -335,42 +308,22 @@ class MapFragment : Fragment(), OnMapReadyCallback {
      * Evernoteのノート新規作成or更新
      * ※FindNotesTask後にcallback
      */
-    @TaskResult
+    @TaskResult(id = "onFindNotesAndCreateOrUpdate")
     fun onFindNotesAndCreateOrUpdate(noteRefList: List<NoteRef>?) {
 
-        // 住所と同じタイトルのノート
-        var targetRef: NoteRef? = noteRefList?.filter{it.title == evNote.title}?.firstOrNull()
+        // タイトルが同じ郵便番号のノート
+        var targetRef: NoteRef? = noteRefList?.filter{it.title.extractPostalCode() == evNote.title.extractPostalCode()}?.firstOrNull()
 
         targetRef?.apply {
             // ノートあり　更新
             CoroutineScope(IO).launch {
-                Log.d("onFindNotes", Gson().toJson(this@apply))
                 val note = this@apply.loadNote(true, true, false, false)
-                note.addToResources(evNote.resource)
-
-                note.content = note.content.removeSuffix(NOTE_SUFFIX) +
-                            "<p>This note was uploaded from Android. It contains an image.</p>" +
-                            "<en-media type=\"" + evNote.resource.mime + "\" hash=\"" +
-                            EvernoteUtil.bytesToHex(evNote.resource.getData().getBodyHash()) + "\"/>" +
-                            NOTE_SUFFIX;
-                noteStoreClient.updateNote(note)
+                helper.updateNote(note, evNote)
             }
         } ?: run() {
             // ノートなし　新規登録
-            val note = Note()
-            note.title = evNote.title
-            note.content =
-                NOTE_PREFIX +
-                        "<p>This note was uploaded from Android. It contains an image.</p>" +
-                        "<en-media type=\"" + evNote.resource.mime + "\" hash=\"" +
-                        EvernoteUtil.bytesToHex(evNote.resource.getData().getBodyHash()) + "\"/>" +
-                        NOTE_SUFFIX;
-            note.addToResources(evNote.resource)
-            evNotebook?.guid.apply {
-                note.notebookGuid = this
-            }
             CoroutineScope(IO).launch {
-                noteStoreClient.createNote(note)
+                helper.registNote(MyApplication.evNotebook?.guid, evNote)
             }
         }
     }
@@ -395,6 +348,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         private const val OSAKA_LON = 135.4959
         fun start(context: Context?) = context?.apply {
             startActivity(Intent(context, MapFragment::class.java))
+        }
+
+        /**
+         * Evernoteノート情報
+         */
+        class EvNote {
+            var title: String = ""
+            var resource: Resource = Resource()
+            fun clear(){ title = ""; resource = Resource() }
         }
     }
 }
