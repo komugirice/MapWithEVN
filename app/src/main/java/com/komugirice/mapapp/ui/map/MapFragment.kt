@@ -307,7 +307,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     /**
-     * 初期表示時Evernoteのノート新規作成or更新
+     * 初期表示時Evernoteから画像を取得し、makerを作成する
      * ※FindNotesTask後にcallback
      */
     @TaskResult(id = "onInitFindNotes")
