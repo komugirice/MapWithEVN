@@ -18,7 +18,9 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import com.evernote.client.android.EvernoteSession
 import com.evernote.client.android.EvernoteUtil
+import com.evernote.client.android.type.NoteRef
 import com.evernote.edam.notestore.NoteFilter
+import com.evernote.edam.notestore.NotesMetadataList
 import com.evernote.edam.notestore.NotesMetadataResultSpec
 import com.evernote.edam.type.Note
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -39,10 +41,12 @@ import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCodeAndAddress
 import com.komugirice.mapapp.extension.makeTempFile
 import com.komugirice.mapapp.task.CreateNewNoteTask
+import com.komugirice.mapapp.task.FindNotesTask
 import kotlinx.android.synthetic.main.fragment_map.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
+import net.vrallev.android.task.TaskResult
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -63,6 +67,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var currentPhotoUri: Uri
 
     private val noteStoreClient = EvernoteSession.getInstance().evernoteClientFactory.noteStoreClient
+    private lateinit var tmpAdress: String
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -130,16 +135,17 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         Prefs().allImage.put(AllImage().apply { allImage = images })
                     } else if (mode == Mode.EVERNOTE) {
                         evNotebook?.apply {
-                            // ノートに登録
-                            //CreateNewNoteTask(address, null, null, this, null)
-                            createNote(address)
+                            tmpAdress = address
+                            // ノート検索タスク実行
+                            FindNotesTask(0,250, evNotebook, null, null).start(this@MapFragment)
                         } ?: run {
-                            // TODO ノートブック存在エラー
+                            // ノートブック存在エラー
                             Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG).show()
                         }
                     }
+                    // TODO progress
                     //start(context)
-                    refresh()
+                    //refresh()
                 }
             }
         // カメラ
@@ -180,13 +186,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         var getNote: Note?
         // IOスレッド
         CoroutineScope(IO).launch {
-            var deferred: Deferred<String?> = async(IO) { getNoteGuid(title) }
-            val guid = deferred.await()
-
+        //val guid = getNoteGuid(title)
 
             try {
-                getNote = noteStoreClient.getNote(guid, true, true, false, false)
-
             } catch (e: Exception) {
                 // ノートが見つからないので新規作成
                 // ノートを作成
@@ -201,27 +203,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 return@launch
             }
             // ノートが見つかったので更新
-            getNote?.content
 
-            noteStoreClient.updateNote(getNote)
+            //noteStoreClient.updateNote(getNote)
 
 
         }
-    }
-
-    /**
-     * evernoteノートのguid取得
-     */
-    private fun getNoteGuid(name: String): String?{
-        var guid: String? = null
-            val filter = NoteFilter()
-        filter.words = name
-
-        val resultSpec = NotesMetadataResultSpec()
-        resultSpec.setIncludeTitleIsSet(true)
-
-        return noteStoreClient.findNotesMetadata(filter, 0, 1, null).notes.firstOrNull()?.guid
-
     }
 
     /**
@@ -336,6 +322,41 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         ).apply {
             // Save a file: path for use with ACTION_VIEW intents
             currentPhotoPath = absolutePath
+        }
+    }
+
+    /**
+     * Evernoteのノート新規作成or更新
+     * ※FindNotesTask後にcallback
+     */
+    @TaskResult
+    fun onFindNotesAndCreateOrUpdate(noteRefList: List<NoteRef>?) {
+
+        // 住所と同じタイトルのノート
+        var targetRef: NoteRef? = noteRefList?.filter{it.title == tmpAdress}?.firstOrNull()
+
+        targetRef?.apply {
+            // ノートあり　更新
+            CoroutineScope(IO).launch {
+                Log.d("onFindNotes", Gson().toJson(this@apply))
+                val note = this@apply.loadNote(true, true, false, false)
+                note.content
+
+                noteStoreClient.updateNote(note)
+            }
+        } ?: run() {
+            // ノートなし　新規登録
+            val note = Note()
+            note.title = tmpAdress
+            note.content = EvernoteUtil.NOTE_PREFIX
+            note.content += EvernoteUtil.NOTE_SUFFIX;
+            evNotebook?.guid.apply {
+                note.notebookGuid = this
+            }
+            CoroutineScope(IO).launch {
+                noteStoreClient.createNote(note)
+            }
+
         }
     }
 
