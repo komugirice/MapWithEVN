@@ -6,6 +6,7 @@ buildscript {
         navigationVersion = '2.0.0'
         timber_version = '4.7.1'
         coroutines_version = '1.2.1'
+        material_dialog_version = '3.1.1'
     }
     repositories {
         google()

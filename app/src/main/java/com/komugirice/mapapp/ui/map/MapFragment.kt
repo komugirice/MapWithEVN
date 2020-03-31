@@ -2,14 +2,10 @@ package com.komugirice.mapapp.ui.map
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
-import android.location.Geocoder
 import android.location.Location
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.provider.MediaStore
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,14 +14,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import com.evernote.client.android.EvernoteSession
-import com.evernote.client.android.EvernoteUtil
-import com.evernote.client.android.EvernoteUtil.NOTE_PREFIX
-import com.evernote.client.android.EvernoteUtil.NOTE_SUFFIX
 import com.evernote.client.android.type.NoteRef
-import com.evernote.client.conn.mobile.FileData
-import com.evernote.edam.type.Note
 import com.evernote.edam.type.Resource
-import com.evernote.edam.type.ResourceAttributes
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -35,29 +25,22 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.gson.Gson
 import com.komugirice.mapapp.*
-import com.komugirice.mapapp.MyApplication.Companion.applicationContext
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.mode
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode
-import com.komugirice.mapapp.extension.extractPostalCodeAndAddress
 import com.komugirice.mapapp.extension.makeTempFile
 import com.komugirice.mapapp.task.FindNotesTask
 import kotlinx.android.synthetic.main.fragment_map.view.*
-import kotlinx.android.synthetic.main.fragment_preference.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.vrallev.android.task.TaskResult
-import java.io.*
-import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.coroutines.CoroutineContext
+import java.io.File
+import java.io.IOException
 
 /**
  * @author komugirice
@@ -156,36 +139,38 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     }
                     // TODO progress
                     //start(context)
-                    //refresh()
                 }
             }
         // カメラ
         if(requestCode == REQUEST_CODE_CAMERA)
             currentPhotoUri.also {
-                val file = it.makeTempFile()
-                if (file != null) {
+                val imageFile = it.makeTempFile()
+                if (imageFile != null) {
                     val latLng = mMap.cameraPosition.target
-                    val address = Geocoder(context, Locale.JAPAN)
-                        .getFromLocation(latLng.latitude, latLng.longitude, 1)
-                        .get(0)
-                        .getAddressLine(0)
-                        .extractPostalCodeAndAddress()
+                    val address = helper.getAddress(context, latLng)
                     val imageData = ImageData().apply {
                         lat = latLng.latitude
                         lon = latLng.longitude
-                        filePath = "file://${file.path}"
+                        filePath = "file://${imageFile.path}"
                         this.address = address
                     }
                     if (mode == Mode.CACHE) {
                         images.add(imageData)
                         Prefs().allImage.put(AllImage().apply { allImage = images })
                     } else if (mode == Mode.EVERNOTE) {
-
+                        evNotebook?.apply {
+                            // ノート情報設定
+                            evNote = helper.createEvNote(imageFile, latLng, address)
+                            // ノート検索タスク実行
+                            FindNotesTask(0,250, evNotebook, null, null).start(this@MapFragment, "onFindNotesAndCreateOrUpdate")
+                        } ?: run {
+                            // ノートブック存在エラー
+                            Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG).show()
+                        }
                     }
+                    // TODO progress
                     //start(context)
-                    refresh()
                 }
-                //Toast.makeText(context, currentPhotoUri.toString(), Toast.LENGTH_LONG).show()
             }
 
     }
@@ -227,7 +212,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 //            moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBoundsBuilder.build(), 150))
             val image = images.lastOrNull()
             // 現在位置設定
-            moveCamera(CameraUpdateFactory.newLatLngZoom(if (image == null) LatLng(CURRENT_LAT, CURRENT_LON) else LatLng(image.lat, image.lon), 12F))
+            moveCamera(CameraUpdateFactory.newLatLngZoom(if (image == null) LatLng(CURRENT_LAT, CURRENT_LON) else LatLng(image.lat, image.lon), 15F))
             var userLocation = LatLng(CURRENT_LAT, CURRENT_LON)
             mMap.addMarker(
                 MarkerOptions()
@@ -256,8 +241,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
         // TODO Evernote
         if (mode == Mode.EVERNOTE) {
-            // ノート検索タスク実行
-            FindNotesTask(0,250, evNotebook, null, null).start(this@MapFragment, "onInitFindNotes")
+            evNotebook?.apply {
+                // ノート検索タスク実行
+                FindNotesTask(0, 250, evNotebook, null, null).start(this@MapFragment, "onInitFindNotes")
+            }
         }
 
     }
@@ -278,8 +265,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     photoFile?.also {
                         currentPhotoPath = it.absolutePath
                         val photoURI: Uri = FileProvider.getUriForFile(
-                            context!!,
-                            packageName + ".provider",
+                            this,
+                            this.packageName + ".provider",
                             it
                         )
                         currentPhotoUri = photoURI
@@ -308,7 +295,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 val resources = note.resources
 
                 withContext(Dispatchers.Main){
-                    resources.forEach {
+                    resources?.forEach {
                         // マーカー作成
                         helper.createMarkerFromEvernote(it, note.title, mMap)
                     }

@@ -1,6 +1,8 @@
 package com.komugirice.mapapp.ui.notebook
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -8,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import com.evernote.client.android.EvernoteSession
 import com.evernote.edam.type.Notebook
 import com.google.gson.Gson
 import com.komugirice.mapapp.MyApplication
@@ -16,11 +19,16 @@ import com.komugirice.mapapp.R
 import com.komugirice.mapapp.task.FindNotebooksTask
 import kotlinx.android.synthetic.main.activity_header.*
 import kotlinx.android.synthetic.main.activity_notebook_name.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import net.vrallev.android.task.TaskResult
 
 class NotebookNameActivity : AppCompatActivity() {
 
     var mutableIsUpdate = MutableLiveData<Boolean>()
+
+    private val noteStoreClient = EvernoteSession.getInstance().evernoteClientFactory.noteStoreClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,13 +65,34 @@ class NotebookNameActivity : AppCompatActivity() {
 
         // onFindNotebooksの監視
         mutableIsUpdate.observe(this, Observer{
+            val notebookName = notebookNameEditText.text.toString().trim()
             if(it == true) {
                 // preferenceに登録
-                val notebookName = notebookNameEditText.text.toString().trim()
                 Prefs().notebookName.put(notebookName)
                 finish()
             } else {
-                Toast.makeText(this, "ノートブック名が存在しません", Toast.LENGTH_LONG).show()
+                AlertDialog.Builder(this)
+                    .setMessage(getString(R.string.alert_create_notebook, notebookName))
+                    .setPositiveButton(R.string.yes, object : DialogInterface.OnClickListener {
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                            // ノートブック新規作成
+                            val notebook = Notebook().apply{
+                                this.name = notebookName
+                            }
+                            CoroutineScope(Dispatchers.IO).launch {
+                                noteStoreClient.createNotebook(notebook)
+                            }
+                            Prefs().notebookName.put(notebookName)
+                            MyApplication.evNotebook = notebook
+                            Toast.makeText(this@NotebookNameActivity, getString(R.string.success_create_notebook, notebookName), Toast.LENGTH_LONG).show()
+                            finish()
+                        }
+                    })
+                    .setNeutralButton(R.string.no, object : DialogInterface.OnClickListener {
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                        }
+                    }).show()
+
             }
         })
     }
