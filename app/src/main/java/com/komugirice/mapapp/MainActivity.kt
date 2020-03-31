@@ -121,9 +121,9 @@ class MainActivity : AppCompatActivity() {
     @TaskResult
     fun onGetUser(user: User) {
         evernoteUser = user
-        if (user != null) {
-            nav_view.menu.findItem(R.id.nav_evernote_value).title = user.username
-        }
+//        if (user != null) {
+//            nav_view.menu.findItem(R.id.nav_evernote_value).title = user.username
+//        }
     }
 
     @TaskResult(id = "personal")

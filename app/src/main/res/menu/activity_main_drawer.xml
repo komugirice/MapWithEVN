@@ -24,6 +24,7 @@
         </menu>
     </item>
 
+    <!--
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_mode"
@@ -44,6 +45,6 @@
             android:title="なし" />
 
     </group>
-
+    -->
 
 </menu>
