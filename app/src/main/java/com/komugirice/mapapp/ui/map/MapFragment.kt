@@ -284,10 +284,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         )
                         currentPhotoUri = photoURI
                         takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-                        startActivityForResult(takePictureIntent, REQUEST_CODE_CAMERA)
                     }
                 }
             }
+            startActivityForResult(takePictureIntent, REQUEST_CODE_CAMERA)
         }
     }
 
