@@ -269,13 +269,14 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 takePictureIntent.resolveActivity(packageManager)?.also {
                     // Create the File where the photo should go
                     val photoFile: File? = try {
-                        createImageFile()
+                        helper.createImageFile()
                     } catch (ex: IOException) {
                         // Error occurred while creating the File
                         null
                     }
                     // Continue only if the File was successfully created
                     photoFile?.also {
+                        currentPhotoPath = it.absolutePath
                         val photoURI: Uri = FileProvider.getUriForFile(
                             context!!,
                             packageName + ".provider",
@@ -291,23 +292,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
 
-    @Throws(IOException::class)
-    private fun createImageFile(): File {
-        // Create an image file name
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-        val storageDir: File? = applicationContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        return File.createTempFile(
-            "JPEG_${timeStamp}_", /* prefix */
-            ".jpg", /* suffix */
-            storageDir /* directory */
-        ).apply {
-            // Save a file: path for use with ACTION_VIEW intents
-            currentPhotoPath = absolutePath
-        }
-    }
+
 
     /**
-     * 初期表示時Evernoteから画像を取得し、makerを作成する
+     * 初期表示時Evernoteから画像を取得し、マーカーを作成する
      * ※FindNotesTask後にcallback
      */
     @TaskResult(id = "onInitFindNotes")
@@ -321,27 +309,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
                 withContext(Dispatchers.Main){
                     resources.forEach {
-                        val newFile: File? = try {
-                            createImageFile()
-                        } catch (ex: IOException) {
-                            // Error occurred while creating the File
-                            null
-                        }
-                        newFile?.apply{
-                            writeBytes(it.data.body)
-                            var marker = mMap.addMarker(
-                                MarkerOptions().position(LatLng(it.attributes.latitude, it.attributes.longitude))
-                                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-                            )
-                            // ImageData
-                            val imageData = ImageData().apply {
-                                lat = it.attributes.latitude
-                                lon = it.attributes.longitude
-                                filePath = "file://${newFile.path}"
-                                this.address = note.title
-                            }
-                            marker.tag = imageData
-                        }
+                        // マーカー作成
+                        helper.createMarkerFromEvernote(it, note.title, mMap)
                     }
                 }
 
@@ -373,31 +342,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
         }
 
-        val newFile: File? = try {
-            createImageFile()
-        } catch (ex: IOException) {
-            // Error occurred while creating the File
-            null
-        }
-        newFile?.apply {
-            writeBytes(evNote.resource.data.body)
-            var marker = mMap.addMarker(
-                MarkerOptions().position(
-                    LatLng(
-                        evNote.resource.attributes.latitude,
-                        evNote.resource.attributes.longitude
-                    )
-                ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-            )
-            // ImageData
-            val imageData = ImageData().apply {
-                lat = evNote.resource.attributes.latitude
-                lon = evNote.resource.attributes.longitude
-                filePath = "file://${newFile.path}"
-                this.address = evNote.title
-            }
-            marker.tag = imageData
-        }
+        // マーカー作成
+        helper.createMarkerFromEvernote(evNote.resource, evNote.title, mMap)
+
     }
 
     private fun refresh() {

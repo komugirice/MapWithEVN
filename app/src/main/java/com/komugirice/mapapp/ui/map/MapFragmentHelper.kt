@@ -3,19 +3,26 @@ package com.komugirice.mapapp.ui.map
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.location.Geocoder
+import android.os.Environment
 import com.evernote.client.android.EvernoteSession
 import com.evernote.client.android.EvernoteUtil
 import com.evernote.client.android.type.NoteRef
 import com.evernote.client.conn.mobile.FileData
 import com.evernote.edam.type.Note
+import com.evernote.edam.type.Resource
 import com.evernote.edam.type.ResourceAttributes
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.komugirice.mapapp.ImageData
 import com.komugirice.mapapp.MyApplication
 import com.komugirice.mapapp.extension.extractPostalCodeAndAddress
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
+import java.io.IOException
+import java.text.SimpleDateFormat
 import java.util.*
 
 
@@ -82,6 +89,21 @@ object MapFragmentHelper {
     }
 
     /**
+     * 画像ファイル作成
+     */
+    @Throws(IOException::class)
+    fun createImageFile(): File {
+        // Create an image file name
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val storageDir: File? = MyApplication.applicationContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(
+            "JPEG_${timeStamp}_", /* prefix */
+            ".jpg", /* suffix */
+            storageDir /* directory */
+        )
+    }
+
+    /**
      * Evernoteノート新規登録
      */
     fun registNote(notebookGuid: String?, evNote: MapFragment.Companion.EvNote){
@@ -97,6 +119,39 @@ object MapFragmentHelper {
             note.notebookGuid = this
         }
         noteStoreClient.createNote(note)
+    }
+
+    /**
+     * Evernoteデータからのマーカー作成
+     */
+    fun createMarkerFromEvernote(resource: Resource, address: String, mMap: GoogleMap) {
+        // 画像ファイル作成
+        val newFile: File? = try {
+            createImageFile()
+        } catch (ex: IOException) {
+            // Error occurred while creating the File
+            null
+        }
+        newFile?.apply {
+            // 画像ファイルにevernote取得データをコピー
+            writeBytes(resource.data.body)
+            var marker = mMap.addMarker(
+                MarkerOptions().position(
+                    LatLng(
+                        resource.attributes.latitude,
+                        resource.attributes.longitude
+                    )
+                ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+            )
+            // ImageData
+            val imageData = ImageData().apply {
+                lat = resource.attributes.latitude
+                lon = resource.attributes.longitude
+                filePath = "file://${newFile.path}"
+                this.address = address
+            }
+            marker.tag = imageData
+        }
     }
 
 }
