@@ -372,6 +372,32 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 helper.registNote(MyApplication.evNotebook?.guid, evNote)
             }
         }
+
+        val newFile: File? = try {
+            createImageFile()
+        } catch (ex: IOException) {
+            // Error occurred while creating the File
+            null
+        }
+        newFile?.apply {
+            writeBytes(evNote.resource.data.body)
+            var marker = mMap.addMarker(
+                MarkerOptions().position(
+                    LatLng(
+                        evNote.resource.attributes.latitude,
+                        evNote.resource.attributes.longitude
+                    )
+                ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+            )
+            // ImageData
+            val imageData = ImageData().apply {
+                lat = evNote.resource.attributes.latitude
+                lon = evNote.resource.attributes.longitude
+                filePath = "file://${newFile.path}"
+                this.address = evNote.title
+            }
+            marker.tag = imageData
+        }
     }
 
     private fun refresh() {
