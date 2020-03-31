@@ -18,16 +18,14 @@ import com.evernote.client.android.type.NoteRef
 import com.evernote.edam.type.Resource
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.mode
+import com.komugirice.mapapp.R
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode
 import com.komugirice.mapapp.extension.makeTempFile
@@ -100,6 +98,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             getMapAsync(this@MapFragment)
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(context!!)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -186,6 +188,16 @@ class MapFragment : Fragment(), OnMapReadyCallback {
      */
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+        mMap.uiSettings.isZoomGesturesEnabled = true
+        mMap.uiSettings.isMapToolbarEnabled = false
+
+        // 現在地設定
+        context?.apply{
+            if(MainActivity.checkPermission(this)){
+                mMap.isMyLocationEnabled = true
+                mMap.uiSettings.isMyLocationButtonEnabled = true
+            }
+        }
         initData()
         fusedLocationClient.lastLocation.addOnSuccessListener { location : Location? ->
             // Got last known location. In some rare situations this can be null.
@@ -213,12 +225,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             val image = images.lastOrNull()
             // 現在位置設定
             moveCamera(CameraUpdateFactory.newLatLngZoom(if (image == null) LatLng(CURRENT_LAT, CURRENT_LON) else LatLng(image.lat, image.lon), 15F))
-            var userLocation = LatLng(CURRENT_LAT, CURRENT_LON)
-            mMap.addMarker(
-                MarkerOptions()
-                    .position(userLocation)
-                    .title("現在地")
-            )
+//            var userLocation = LatLng(CURRENT_LAT, CURRENT_LON)
+//            mMap.addMarker(
+//                MarkerOptions()
+//                    .position(userLocation)
+//                    .title("現在地")
+//            ).showInfoWindow()
 //             mMap.setOnInfoWindowClickListener(object: GoogleMap.OnInfoWindowClickListener {
 //                 override fun onInfoWindowClick(p0: Marker?) {
 //                        p0?.showInfoWindow()
@@ -226,6 +238,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 //            })
         }
     }
+
 
     private fun initData() {
         // アプリ内キャッシュ

@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -109,9 +110,7 @@ class MainActivity : AppCompatActivity() {
 
         if(requestCode == 1) {
             if (grantResults.size > 0 && grantResults.get(0) == PackageManager.PERMISSION_GRANTED) {
-                if (ContextCompat.checkSelfPermission(this,
-                        android.Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED) {
+                if (checkPermission(this)) {
                     locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
                 }
             }
@@ -145,6 +144,16 @@ class MainActivity : AppCompatActivity() {
         fun start(activity: AppCompatActivity) = activity.apply {
             //finishAffinity()
             startActivity(Intent(activity, MainActivity::class.java))
+        }
+
+        fun checkPermission(context: Context): Boolean {
+            return (ContextCompat.checkSelfPermission(context,
+                android.Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED)
+                    &&
+                (ContextCompat.checkSelfPermission(context,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED)
         }
     }
 }
