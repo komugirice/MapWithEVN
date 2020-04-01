@@ -33,9 +33,6 @@ class MainActivity : AppCompatActivity() {
 
     // drawer
     private lateinit var appBarConfiguration: AppBarConfiguration
-    // 位置
-    private lateinit var locationManager: LocationManager
-    private lateinit var locationListener: LocationListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -141,6 +138,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        // 位置
+        lateinit var locationManager: LocationManager
+        lateinit var locationListener: LocationListener
         fun start(activity: AppCompatActivity) = activity.apply {
             //finishAffinity()
             startActivity(Intent(activity, MainActivity::class.java))

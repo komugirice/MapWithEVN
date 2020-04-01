@@ -17,7 +17,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.komugirice.mapapp.ImageData
 import com.komugirice.mapapp.MyApplication
-import com.komugirice.mapapp.extension.extractPostalCodeAndAddress
+import com.komugirice.mapapp.extension.extractPostalCodeAndAllAddress
+import com.komugirice.mapapp.extension.extractPostalCodeAndHalfAddress
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -33,12 +34,23 @@ object MapFragmentHelper {
     /**
      * 住所取得
      */
-    fun getAddress(context: Context?, latLng: LatLng): String {
+    fun getPostalCodeAndAllAddress(context: Context?, latLng: LatLng): String {
         return Geocoder(context, Locale.JAPAN)
             .getFromLocation(latLng.latitude, latLng.longitude, 1)
             .get(0)
             .getAddressLine(0)
-            .extractPostalCodeAndAddress()
+            .extractPostalCodeAndAllAddress()
+    }
+
+    /**
+     * 住所取得
+     */
+    fun getPostalCodeAndHalfAddress(context: Context?, latLng: LatLng): String {
+        return Geocoder(context, Locale.JAPAN)
+            .getFromLocation(latLng.latitude, latLng.longitude, 1)
+            .get(0)
+            .getAddressLine(0)
+            .extractPostalCodeAndHalfAddress()
     }
 
     /**

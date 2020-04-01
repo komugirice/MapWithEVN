@@ -455,7 +455,17 @@ fun String.extractURL(): String? {
  * (Geocoder.getFromLocation.get(0).getAddressLine(0)のみ対応)
  * @return 郵便番号 + 住所
  */
-fun String.extractPostalCodeAndAddress(): String {
+fun String.extractPostalCodeAndAllAddress(): String {
+     val extract =  "〒.*".toRegex().find(this)?.value ?: ""
+     return extract
+}
+
+/**
+ * 文字列から郵便番号と住所を抽出する
+ * (Geocoder.getFromLocation.get(0).getAddressLine(0)のみ対応)
+ * @return 郵便番号 + 住所(半角スペースまで)
+ */
+fun String.extractPostalCodeAndHalfAddress(): String {
      val extract =  "〒.*".toRegex().find(this)?.value ?: ""
      val s = extract.split(" ")
      return if(s.size > 1) "${s[0]} ${s[1]}" else s[0]

@@ -6,6 +6,7 @@ import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,7 +22,9 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.gson.Gson
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.mode
@@ -39,6 +42,7 @@ import kotlinx.coroutines.withContext
 import net.vrallev.android.task.TaskResult
 import java.io.File
 import java.io.IOException
+import java.util.*
 
 /**
  * @author komugirice
@@ -49,8 +53,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private var images = mutableListOf<ImageData>()
+
     // 位置
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var myLocate: Location
+    private var tapLocation: LatLng? = null
+    private var tapMarker: Marker? = null
 
     // 写真
     private lateinit var currentPhotoPath: String
@@ -113,8 +121,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             data.data?.also {
                 val imageFile = it.makeTempFile()
                 if (imageFile != null) {
-                    val latLng = mMap.cameraPosition.target
-                    val address = helper.getAddress(context, latLng)
+
+                    // 位置情報設定
+                    var latLng = focusPosition()
+                    val address = helper.getPostalCodeAndHalfAddress(context, latLng)
 
                     val imageData = ImageData().apply {
                         lat = latLng.latitude
@@ -122,7 +132,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         filePath = "file://${imageFile.path}"
                         this.address = address
                     }
-
 
                     if (mode == Mode.CACHE) {
                         images.add(imageData)
@@ -148,14 +157,19 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             currentPhotoUri.also {
                 val imageFile = it.makeTempFile()
                 if (imageFile != null) {
-                    val latLng = mMap.cameraPosition.target
-                    val address = helper.getAddress(context, latLng)
+
+                    // 位置情報設定
+                    var latLng: LatLng = focusPosition()
+
+                    val address = helper.getPostalCodeAndHalfAddress(context, latLng)
+
                     val imageData = ImageData().apply {
                         lat = latLng.latitude
                         lon = latLng.longitude
                         filePath = "file://${imageFile.path}"
                         this.address = address
                     }
+
                     if (mode == Mode.CACHE) {
                         images.add(imageData)
                         Prefs().allImage.put(AllImage().apply { allImage = images })
@@ -177,6 +191,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     }
 
+    private fun focusPosition(): LatLng {
+        var latLng = tapLocation ?: LatLng(myLocate.latitude, myLocate.longitude) // タップした位置もしくは現在値
+        return latLng
+    }
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -196,17 +215,45 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             if(MainActivity.checkPermission(this)){
                 mMap.isMyLocationEnabled = true
                 mMap.uiSettings.isMyLocationButtonEnabled = true
+                myLocate = MainActivity.locationManager.getLastKnownLocation("gps")
+                createTapMarker(LatLng(myLocate.latitude, myLocate.longitude))
             }
         }
         initData()
-        fusedLocationClient.lastLocation.addOnSuccessListener { location : Location? ->
+        initGoogleMap()
+//        fusedLocationClient.lastLocation.addOnSuccessListener { location : Location? ->
             // Got last known location. In some rare situations this can be null.
-            CURRENT_LAT = location?.latitude ?: TOKYO_LAT
-            CURRENT_LON = location?.longitude ?: TOKYO_LON
-            initGoogleMap()
+//            CURRENT_LAT = location?.latitude ?: TOKYO_LAT
+//            CURRENT_LON = location?.longitude ?: TOKYO_LON
+
 //        val sydney = LatLng(-34.0, 151.0)
 //        mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+//        }
+
+        // タップした時のリスナーをセット
+        mMap.setOnMapClickListener {
+            createTapMarker(it)
+        }
+    }
+
+    private fun createTapMarker(latLng: LatLng) {
+        tapLocation = LatLng(latLng.latitude, latLng.longitude).also {
+            val locationStr = helper.getPostalCodeAndAllAddress(context, latLng)
+            tapMarker?.remove()
+            tapMarker = mMap.addMarker(
+                MarkerOptions()
+                    .position(it)
+                    .title(locationStr))
+            tapMarker?.apply {
+                tag = ImageData().apply{
+                    this.address = locationStr
+                    this.lat = latLng.latitude
+                    this.lon = latLng.longitude
+                }
+                showInfoWindow()
+            }
+
         }
     }
 
@@ -224,18 +271,22 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 //            moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBoundsBuilder.build(), 150))
             val image = images.lastOrNull()
             // 現在位置設定
-            moveCamera(CameraUpdateFactory.newLatLngZoom(if (image == null) LatLng(CURRENT_LAT, CURRENT_LON) else LatLng(image.lat, image.lon), 15F))
-//            var userLocation = LatLng(CURRENT_LAT, CURRENT_LON)
-//            mMap.addMarker(
-//                MarkerOptions()
-//                    .position(userLocation)
-//                    .title("現在地")
-//            ).showInfoWindow()
-//             mMap.setOnInfoWindowClickListener(object: GoogleMap.OnInfoWindowClickListener {
-//                 override fun onInfoWindowClick(p0: Marker?) {
-//                        p0?.showInfoWindow()
-//                 }
-//            })
+            moveCamera(CameraUpdateFactory.newLatLngZoom(if (image == null) LatLng(myLocate.latitude, myLocate.longitude) else LatLng(image.lat, image.lon), 15F))
+
+            // InfoWindowタップ時
+            this.setOnInfoWindowClickListener {
+                Log.d("OnInfoWindowClick", "${Gson().toJson(it.tag)}")
+            }
+            // InfoWindow長押し時
+            this.setOnInfoWindowLongClickListener {
+                Log.d("OnInfoWindowClick", "${Gson().toJson(it.tag)}")
+            }
+            this.setOnMarkerClickListener {
+                var imageData = it.tag as ImageData
+                it.title = imageData.address
+                it.showInfoWindow()
+                true
+            }
         }
     }
 
