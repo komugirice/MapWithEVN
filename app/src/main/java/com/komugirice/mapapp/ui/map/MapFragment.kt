@@ -14,12 +14,14 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
-import com.evernote.client.android.EvernoteSession
 import com.evernote.client.android.type.NoteRef
 import com.evernote.edam.type.Resource
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.*
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
@@ -28,7 +30,6 @@ import com.google.gson.Gson
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.mode
-import com.komugirice.mapapp.R
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode
 import com.komugirice.mapapp.extension.makeTempFile
@@ -42,21 +43,22 @@ import kotlinx.coroutines.withContext
 import net.vrallev.android.task.TaskResult
 import java.io.File
 import java.io.IOException
-import java.util.*
 
 /**
  * @author komugirice
  */
 class MapFragment : Fragment(), OnMapReadyCallback {
 
-    private var helper = MapFragmentHelper
+    private lateinit var viewModel: MapFragmentViewModel
+
+    private val helper = MapFragmentHelper
 
     private lateinit var mMap: GoogleMap
     private var images = mutableListOf<ImageData>()
 
     // 位置
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var myLocate: Location
+    private lateinit var myLocate: LatLng
     private var tapLocation: LatLng? = null
     private var tapMarker: Marker? = null
 
@@ -64,7 +66,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var currentPhotoPath: String
     private lateinit var currentPhotoUri: Uri
 
-    private val noteStoreClient = EvernoteSession.getInstance().evernoteClientFactory.noteStoreClient
 
     private var evNote = EvNote()
 
@@ -88,6 +89,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         root.cameraButton.setOnClickListener {
             dispatchTakePictureIntent()
         }
+
         return root
 
     }
@@ -96,11 +98,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         super.onActivityCreated(savedInstanceState)
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-//        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-//        mapFragment.getMapAsync(this)
-//        fusedLocationClient = LocationServices.getFusedLocationProviderClient()
-
-
         val mapFragment = childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment?
         mapFragment?.apply{
             getMapAsync(this@MapFragment)
@@ -212,15 +209,22 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         // 現在地設定
         context?.apply{
+            // 現在位置パーミッションチェック
             if(MainActivity.checkPermission(this)){
-                mMap.isMyLocationEnabled = true
-                mMap.uiSettings.isMyLocationButtonEnabled = true
-                myLocate = MainActivity.locationManager.getLastKnownLocation("gps")
-                createTapMarker(LatLng(myLocate.latitude, myLocate.longitude))
+                fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                    mMap.isMyLocationEnabled = true
+                    mMap.uiSettings.isMyLocationButtonEnabled = true
+                    //myLocate = MainActivity.locationManager.getLastKnownLocation("gps")
+                    myLocate = LatLng(location?.latitude ?: TOKYO_LAT, location?.longitude ?: TOKYO_LON)
+                    createTapMarker(LatLng(myLocate.latitude, myLocate.longitude))
+                    initGoogleMap()
+                }
+            } else {
+                myLocate = LatLng(TOKYO_LAT, TOKYO_LON)
+                initGoogleMap()
             }
         }
         initData()
-        initGoogleMap()
 //        fusedLocationClient.lastLocation.addOnSuccessListener { location : Location? ->
             // Got last known location. In some rare situations this can be null.
 //            CURRENT_LAT = location?.latitude ?: TOKYO_LAT
@@ -244,7 +248,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             tapMarker = mMap.addMarker(
                 MarkerOptions()
                     .position(it)
-                    .title(locationStr))
+                    .title(locationStr)
+                    .snippet("この位置に登録します"))
             tapMarker?.apply {
                 tag = ImageData().apply{
                     this.address = locationStr
@@ -271,7 +276,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 //            moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBoundsBuilder.build(), 150))
             val image = images.lastOrNull()
             // 現在位置設定
-            moveCamera(CameraUpdateFactory.newLatLngZoom(if (image == null) LatLng(myLocate.latitude, myLocate.longitude) else LatLng(image.lat, image.lon), 15F))
+            moveCamera(CameraUpdateFactory.newLatLngZoom(if (image == null) LatLng(myLocate?.latitude, myLocate.longitude) else LatLng(image.lat, image.lon), 15F))
 
             // InfoWindowタップ時
             this.setOnInfoWindowClickListener {

@@ -17,6 +17,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.komugirice.mapapp.ImageData
 import com.komugirice.mapapp.MyApplication
+import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
 import com.komugirice.mapapp.extension.extractPostalCodeAndAllAddress
 import com.komugirice.mapapp.extension.extractPostalCodeAndHalfAddress
 import java.io.BufferedInputStream
@@ -28,8 +29,6 @@ import java.util.*
 
 
 object MapFragmentHelper {
-
-    private val noteStoreClient = EvernoteSession.getInstance().evernoteClientFactory.noteStoreClient
 
     /**
      * 住所取得
@@ -97,7 +96,7 @@ object MapFragmentHelper {
                 EvernoteUtil.bytesToHex(evNote.resource.getData().getBodyHash()) + "\"/>" +
                 EvernoteUtil.NOTE_SUFFIX;
 
-        noteStoreClient.updateNote(note)
+        noteStoreClient?.updateNote(note)
     }
 
     /**
@@ -130,7 +129,7 @@ object MapFragmentHelper {
         notebookGuid?.apply {
             note.notebookGuid = this
         }
-        noteStoreClient.createNote(note)
+        noteStoreClient?.createNote(note)
     }
 
     /**

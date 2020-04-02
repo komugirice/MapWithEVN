@@ -3,24 +3,22 @@ package com.komugirice.mapapp
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavGraph
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
+import com.evernote.client.android.EvernoteSession
 import com.evernote.edam.type.Notebook
 import com.evernote.edam.type.User
-import com.google.gson.Gson
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.evernoteUser
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
+import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
 import com.komugirice.mapapp.task.FindNotebooksTask
 import com.komugirice.mapapp.task.GetUserTask
 import kotlinx.android.synthetic.main.activity_main.*
@@ -43,10 +41,11 @@ class MainActivity : AppCompatActivity() {
         nav_view.setupWithNavController(navController)
         appBarConfiguration = AppBarConfiguration(navController.graph, drawer_layout)
         // 位置ダイアログ
-        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        initLocationListener()
+//        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        requestPermissons()
 
         if (isEvernoteLoggedIn) {
+            noteStoreClient = EvernoteSession.getInstance().evernoteClientFactory.noteStoreClient
             if (savedInstanceState == null) {
                 GetUserTask().start(this)
                 FindNotebooksTask().start(this, "personal");
@@ -60,26 +59,26 @@ class MainActivity : AppCompatActivity() {
      * 現在位置情報の許可ダイアログの準備
      *
      */
-    private fun initLocationListener() {
+    private fun requestPermissons() {
 
-        locationListener = object: LocationListener {
-            override fun onLocationChanged(location: Location?) {
-            }
-
-            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-            }
-
-            override fun onProviderEnabled(provider: String?) {
-            }
-
-            override fun onProviderDisabled(provider: String?) {
-            }
-        }
+//        locationListener = object: LocationListener {
+//            override fun onLocationChanged(location: Location?) {
+//            }
+//
+//            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+//            }
+//
+//            override fun onProviderEnabled(provider: String?) {
+//            }
+//
+//            override fun onProviderDisabled(provider: String?) {
+//            }
+//        }
 
 
         if (Build.VERSION.SDK_INT < 23) {
             try {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5.5f, locationListener)
+//                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
             } catch(e: SecurityException){
             }
         } else {
@@ -88,8 +87,8 @@ class MainActivity : AppCompatActivity() {
                     android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
                 this.requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1)
-            } else {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5.5f, locationListener)
+//            } else {
+//                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
             }
         }
     }
@@ -108,7 +107,7 @@ class MainActivity : AppCompatActivity() {
         if(requestCode == 1) {
             if (grantResults.size > 0 && grantResults.get(0) == PackageManager.PERMISSION_GRANTED) {
                 if (checkPermission(this)) {
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
+//                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
                 }
             }
         }
@@ -139,8 +138,8 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         // 位置
-        lateinit var locationManager: LocationManager
-        lateinit var locationListener: LocationListener
+//        lateinit var locationManager: LocationManager
+//        lateinit var locationListener: LocationListener
         fun start(activity: AppCompatActivity) = activity.apply {
             //finishAffinity()
             startActivity(Intent(activity, MainActivity::class.java))
