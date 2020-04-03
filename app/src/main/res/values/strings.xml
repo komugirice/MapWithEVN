@@ -21,5 +21,8 @@
     <string name="no">いいえ</string>
     <!-- map -->
     <string name="current_point">この位置に登録します</string>
+    <string name="menu_delete">削除</string>
+    <string name="menu_edit">編集</string>
+
 </resources>
 

@@ -7,10 +7,15 @@ class AllImage {
     var allImage : List<ImageData> = listOf()
 }
 
-class ImageData {
+open class ImageData {
     var lat = 0.0
     var lon = 0.0
     var filePath = ""
     var address = ""
     var id = System.currentTimeMillis()
+}
+
+class EvImageData: ImageData() {
+    var guid = ""
+    var noteGuid = ""
 }

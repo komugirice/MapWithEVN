@@ -15,8 +15,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.komugirice.mapapp.ImageData
-import com.komugirice.mapapp.MyApplication
+import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
 import com.komugirice.mapapp.extension.extractPostalCodeAndAllAddress
 import com.komugirice.mapapp.extension.extractPostalCodeAndHalfAddress
@@ -55,7 +54,7 @@ object MapFragmentHelper {
     /**
      * Evernoteノート情報作成
      */
-    fun createEvNote(imageFile: File, latLng: LatLng, title: String): MapFragment.Companion.EvNote {
+    fun createEvResource(imageFile: File, latLng: LatLng, title: String): MapFragment.Companion.EvResource {
         // Hash the data in the image file. The hash is used to reference the file in the ENML note content.
         var `in` = BufferedInputStream(FileInputStream(imageFile.getPath()))
         val data = FileData(EvernoteUtil.hash(`in`), File(imageFile.getPath()))
@@ -69,7 +68,7 @@ object MapFragmentHelper {
         attributes.longitude = latLng.longitude
         attributes.latitude = latLng.latitude
 
-        val evNote = MapFragment.Companion.EvNote().apply {
+        val evNote = MapFragment.Companion.EvResource().apply {
             // クラス変数evNote設定
             this.title = title
 
@@ -88,12 +87,12 @@ object MapFragmentHelper {
     /**
      * Evernoteノート更新
      */
-    fun updateNote(note: Note, evNote: MapFragment.Companion.EvNote){
-        note.addToResources(evNote.resource)
+    fun updateNote(note: Note, evResource: MapFragment.Companion.EvResource){
+        note.addToResources(evResource.resource)
 
         note.content = note.content.removeSuffix(EvernoteUtil.NOTE_SUFFIX) +
-                "<en-media type=\"" + evNote.resource.mime + "\" hash=\"" +
-                EvernoteUtil.bytesToHex(evNote.resource.getData().getBodyHash()) + "\"/>" +
+                "<en-media type=\"" + evResource.resource.mime + "\" hash=\"" +
+                EvernoteUtil.bytesToHex(evResource.resource.getData().getBodyHash()) + "\"/>" +
                 EvernoteUtil.NOTE_SUFFIX;
 
         noteStoreClient?.updateNote(note)
@@ -117,20 +116,21 @@ object MapFragmentHelper {
     /**
      * Evernoteノート新規登録
      */
-    fun registNote(notebookGuid: String?, evNote: MapFragment.Companion.EvNote){
+    fun createNote(notebookGuid: String?, evResource: MapFragment.Companion.EvResource){
         val note = Note()
-        note.title = evNote.title
+        note.title = evResource.title
         note.content =
             EvernoteUtil.NOTE_PREFIX +
-                    "<en-media type=\"" + evNote.resource.mime + "\" hash=\"" +
-                    EvernoteUtil.bytesToHex(evNote.resource.getData().getBodyHash()) + "\"/>" +
+                    "<en-media type=\"" + evResource.resource.mime + "\" hash=\"" +
+                    EvernoteUtil.bytesToHex(evResource.resource.getData().getBodyHash()) + "\"/>" +
                     EvernoteUtil.NOTE_SUFFIX;
-        note.addToResources(evNote.resource)
+        note.addToResources(evResource.resource)
         notebookGuid?.apply {
             note.notebookGuid = this
         }
         noteStoreClient?.createNote(note)
     }
+
 
     /**
      * Evernoteデータからのマーカー作成
@@ -155,14 +155,30 @@ object MapFragmentHelper {
                 ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
             )
             // ImageData
-            val imageData = ImageData().apply {
+            val evImageData = EvImageData().apply {
                 lat = resource.attributes.latitude
                 lon = resource.attributes.longitude
                 filePath = "file://${newFile.path}"
                 this.address = address
+                guid = resource.guid
+                noteGuid = resource.noteGuid
             }
-            marker.tag = imageData
+            marker.tag = evImageData
         }
+    }
+
+    fun deleteCacheImage(imageData: ImageData,
+                         images: MutableList<ImageData>) {
+        File(imageData.filePath).delete()
+        images.remove(imageData)
+        Prefs().allImage.put(AllImage().apply { allImage = images })
+
+
+    }
+    fun deleteEvImage(evImage: EvImageData) {
+        val note = noteStoreClient?.getNote(evImage.noteGuid, true, true, true, false)
+        // ImageAdapterから作らざるをえない
+
     }
 
 }
