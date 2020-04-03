@@ -1,2 +1,2 @@
-include ':app'
-rootProject.name='MapWithEvernote'
+include ':app', 'library'
+rootProject.name='MapWithEVN'

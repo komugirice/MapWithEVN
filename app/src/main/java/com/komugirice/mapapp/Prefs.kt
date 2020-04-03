@@ -5,10 +5,16 @@ import android.preference.PreferenceManager
 import com.komugirice.mapapp.MyApplication.Companion.applicationContext
 import com.google.gson.Gson
 import io.reactivex.Observable
+import timber.log.Timber
 
+/**
+ * @author Jane
+ */
 class Prefs {
 
     var allImage = AllImageEntry("allImages")
+    val mode by lazy{ IntEntry("mode")}
+    val notebookName by lazy { StringEntry("notebookName")}
 
     interface Entry<T> {
         fun put(value: T)
@@ -28,6 +34,42 @@ class Prefs {
                 gson.fromJson(it.getString(key, ""), AllImage::class.java)
             }.onErrorReturn {
                 AllImage()
+            }
+        }
+
+        override fun remove() = getSharedPreference().edit().remove(key).apply()
+    }
+
+    class StringEntry(private val key: String, private val defaultValue: String = "") : Entry<String> {
+        override fun put(value: String) {
+            Timber.d("put $key -> $value")
+            getSharedPreference().edit().putString(key, value).apply()
+        }
+
+        override fun get(): Observable<String> {
+            return createObservable(getSharedPreference(), key) {
+                it.getString(key, defaultValue) ?: defaultValue
+            }.onErrorReturn {
+                defaultValue
+            }
+        }
+
+        override fun remove() = getSharedPreference().edit().remove(key).apply()
+
+    }
+
+    class IntEntry(private val key: String, private val defaultValue: Int = 0) : Entry<Int> {
+        override fun put(value: Int) {
+            Timber.d("put $key -> $value")
+            getSharedPreference().edit().putInt(key, value).apply()
+        }
+
+        override fun get(): Observable<Int> {
+            return createObservable(getSharedPreference(), key) {
+                it.getInt(key, defaultValue)
+            }.onErrorReturn {
+                put(defaultValue)
+                defaultValue
             }
         }
 

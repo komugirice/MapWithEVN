@@ -1,0 +1,60 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-android'
+
+
+dependencies {
+    implementation "com.android.support:support-v4:$rootProject.ext.supportLibVersion"
+    implementation 'com.evernote:evernote-api:1.25.1'
+    implementation 'org.scribe:scribe:1.3.7'
+
+    implementation 'net.vrallev.android:android-task:1.0.7'
+    implementation 'com.squareup.okhttp:okhttp:2.4.0'
+
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.assertj:assertj-core:1.7.1'
+    implementation 'androidx.core:core-ktx:1.3.0-alpha02'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    resourcePrefix 'esdk_'
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionName rootProject.ext.VERSION_NAME
+        versionCode rootProject.ext.VERSION_CODE
+
+        def properties = new Properties()
+        properties.load(rootProject.file('key.properties').newDataInputStream())
+        // local.propertiesのapi_keyに定義されている値を読み込む
+        def CONSUMER_KEY = properties.getProperty("CONSUMER_KEY")
+        def CONSUMER_SECRET = properties.getProperty("CONSUMER_SECRET")
+        // ついでにbuildConfigFieldに定義
+        buildConfigField("String", "CONSUMER_KEY", "\"${CONSUMER_KEY}\"")
+        buildConfigField("String", "CONSUMER_SECRET", "\"${CONSUMER_SECRET}\"")
+
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+    lintOptions {
+        abortOnError true
+
+        //htmlOutput file("$project.buildDir/reports/lint/lint.html")
+        //xmlOutput file("$project.buildDir/reports/lint/lint.xml")
+    }
+
+}
+//apply from: '../build-config/gradle-quality.gradle'
+//apply from: '../build-config/gradle-push.gradle'
+repositories {
+    mavenCentral()
+}

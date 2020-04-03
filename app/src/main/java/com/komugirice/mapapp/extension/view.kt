@@ -1,4 +1,4 @@
-package com.komugirice.mapapp
+package com.komugirice.mapapp.extension
 
 import android.view.View
 
