@@ -10,10 +10,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import com.afollestad.materialdialogs.MaterialDialog
 import com.evernote.client.android.type.NoteRef
 import com.evernote.edam.type.Resource
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -30,10 +32,12 @@ import com.google.gson.Gson
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.mode
+import com.komugirice.mapapp.databinding.ImageViewDialogBinding
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode
 import com.komugirice.mapapp.extension.makeTempFile
 import com.komugirice.mapapp.task.FindNotesTask
+import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.fragment_map.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -280,7 +284,27 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
             // InfoWindowタップ時
             this.setOnInfoWindowClickListener {
-                Log.d("OnInfoWindowClick", "${Gson().toJson(it.tag)}")
+                var imageData = it.tag as ImageData
+                // 画像プレビュー表示
+                context?.apply {
+                    val imageView = ImageView(this)
+                    Picasso.get().load(imageData.filePath).into(imageView)
+
+                    MaterialDialog(this).apply {
+                        cancelable(true)
+                        val dialogBinding = ImageViewDialogBinding.inflate(
+                            LayoutInflater.from(context),
+                            null,
+                            false
+                        )
+                        dialogBinding.imageView.setOnClickListener {
+                            this.cancel()
+                        }
+
+                        dialogBinding.imageView.setImageDrawable(imageView.drawable)
+                        setContentView(dialogBinding.root)
+                    }.show()
+                }
             }
             // InfoWindow長押し時
             this.setOnInfoWindowLongClickListener {

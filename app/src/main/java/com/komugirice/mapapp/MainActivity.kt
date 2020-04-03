@@ -40,8 +40,7 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment)
         nav_view.setupWithNavController(navController)
         appBarConfiguration = AppBarConfiguration(navController.graph, drawer_layout)
-        // 位置ダイアログ
-//        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        // 現在位置情報の許可
         requestPermissons()
 
         if (isEvernoteLoggedIn) {
@@ -61,20 +60,6 @@ class MainActivity : AppCompatActivity() {
      */
     private fun requestPermissons() {
 
-//        locationListener = object: LocationListener {
-//            override fun onLocationChanged(location: Location?) {
-//            }
-//
-//            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-//            }
-//
-//            override fun onProviderEnabled(provider: String?) {
-//            }
-//
-//            override fun onProviderDisabled(provider: String?) {
-//            }
-//        }
-
 
         if (Build.VERSION.SDK_INT < 23) {
             try {
@@ -87,8 +72,6 @@ class MainActivity : AppCompatActivity() {
                     android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
                 this.requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1)
-//            } else {
-//                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
             }
         }
     }
@@ -107,7 +90,7 @@ class MainActivity : AppCompatActivity() {
         if(requestCode == 1) {
             if (grantResults.size > 0 && grantResults.get(0) == PackageManager.PERMISSION_GRANTED) {
                 if (checkPermission(this)) {
-//                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
+
                 }
             }
         }
@@ -137,9 +120,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        // 位置
-//        lateinit var locationManager: LocationManager
-//        lateinit var locationListener: LocationListener
         fun start(activity: AppCompatActivity) = activity.apply {
             //finishAffinity()
             startActivity(Intent(activity, MainActivity::class.java))
