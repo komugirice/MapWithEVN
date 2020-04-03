@@ -285,6 +285,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             // InfoWindowタップ時
             this.setOnInfoWindowClickListener {
                 var imageData = it.tag as ImageData
+                if(imageData.filePath.isEmpty()) {
+                    it.hideInfoWindow()
+                    return@setOnInfoWindowClickListener
+                }
+
                 // 画像プレビュー表示
                 context?.apply {
                     val imageView = ImageView(this)

@@ -17,6 +17,19 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+        <TextView
+            android:id="@+id/snippetTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:background="@color/white"
+            android:padding="2dp"
+            android:textSize="14dp"
+            android:text="@string/current_point"
+            android:textColor="@color/gray"
+            app:layout_constraintStart_toStartOf="@+id/titleTextView"
+            app:layout_constraintEnd_toEndOf="@+id/titleTextView"
+            app:layout_constraintTop_toBottomOf="@+id/titleTextView" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

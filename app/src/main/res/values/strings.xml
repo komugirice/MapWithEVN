@@ -19,5 +19,7 @@
     <string name="success_create_notebook">「%1$s」を作成しました</string>
     <string name="yes">はい</string>
     <string name="no">いいえ</string>
+    <!-- map -->
+    <string name="current_point">この位置に登録します</string>
 </resources>
 
