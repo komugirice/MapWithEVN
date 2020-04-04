@@ -40,11 +40,9 @@ import com.komugirice.mapapp.task.CreateNewNoteTask
 import com.komugirice.mapapp.task.FindNotesTask
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.fragment_map.view.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers.Main
 import net.vrallev.android.task.TaskResult
 import java.io.File
 import java.io.IOException
@@ -442,6 +440,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
      */
     @TaskResult(id = "onInitFindNotes")
     fun onInitFindNotes(noteRefList: List<NoteRef>?) {
+        mEvNotebook.notes.clear()
+
         CoroutineScope(IO).launch {
 
             noteRefList?.forEach {
@@ -476,6 +476,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         var targetRef: NoteRef? = noteRefList?.filter{it.title.extractPostalCode() == mEvResource.title.extractPostalCode()}?.firstOrNull()
 
         targetRef?.apply {
+
             // ノートあり　更新
             CoroutineScope(IO).launch {
                 val note = this@apply.loadNote(true, true, false, false)
@@ -487,13 +488,28 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             val imageMarker = helper.createMarkerFromEvernote(mEvResource.resource, mEvResource.title, mMap)
             imageMarker.showInfoWindow()
             imageMarkers.add(imageMarker)
+
         } ?: run() {
+
             // ノートなし　新規登録
             val note = helper.createNote(MyApplication.evNotebook?.guid, mEvResource)
-            CreateNewNoteTask(note.title, note.content, null, evNotebook, null).start(this@MapFragment, "onCreateNewNote")
-//            CoroutineScope(IO).launch {
-                //MyApplication.noteStoreClient?.createNote(note)
-//            }
+            // resource.body = nullでエラー。使えず。EDAMUserException(errorCode:ENML_VALIDATION, parameter:The processing instruction target matching "[xX][mM][lL]" is not allowed.
+            //CreateNewNoteTask(note.title, note.content, null, evNotebook, null).start(this@MapFragment, "onCreateNewNote")
+
+            CoroutineScope(IO).launch {
+                async {
+                    MyApplication.noteStoreClient?.createNote(note)
+                }.await()
+
+                withContext(Main){
+                    // 再度ノート検索タスク実行
+                    imageMarkers.forEach { it.remove() }
+                    imageMarkers.clear()
+                    FindNotesTask(0, 250, evNotebook, null, null).start(this@MapFragment, "onInitFindNotes")
+                }
+            }
+
+
         }
 
 
@@ -501,6 +517,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     /**
      * CreateNewNoteTask実行後、呼び出し
+     * resource.body = nullでエラー。使えず。
+     * EDAMUserException(errorCode:ENML_VALIDATION, parameter:The processing instruction target matching "[xX][mM][lL]" is not allowed.
+     *
      */
     @TaskResult(id="onCreateNewNote")
     fun onCreateNewNote(note: Note?) {
