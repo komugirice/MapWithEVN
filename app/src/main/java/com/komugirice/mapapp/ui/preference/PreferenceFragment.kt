@@ -7,10 +7,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.evernote.client.android.EvernoteSession
+import com.evernote.client.android.login.EvernoteLoginFragment
 import com.evernote.edam.type.User
 import com.komugirice.mapapp.MyApplication
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
@@ -18,7 +20,6 @@ import com.komugirice.mapapp.Prefs
 import com.komugirice.mapapp.R
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.task.GetUserTask
-import com.komugirice.mapapp.ui.map.MapFragment
 import com.komugirice.mapapp.ui.notebook.NotebookNameActivity
 import kotlinx.android.synthetic.main.activity_header.*
 import kotlinx.android.synthetic.main.fragment_preference.*
@@ -28,7 +29,8 @@ import net.vrallev.android.task.TaskResult
 /**
  * @author komugirice
  */
-class PreferenceFragment: Fragment() {
+class PreferenceFragment: Fragment(),
+    EvernoteLoginFragment.ResultCallback {
 
     private lateinit var preferenceViewModel: PreferenceViewModel
 
@@ -71,7 +73,7 @@ class PreferenceFragment: Fragment() {
         // evernote連携再設定
         isEvernoteLoggedIn = EvernoteSession.getInstance().isLoggedIn
         if(isEvernoteLoggedIn){
-            GetUserTask().start(this)
+            GetUserTask().start(this, "preference")
         }
 
         preferenceViewModel.initData()
@@ -130,11 +132,19 @@ class PreferenceFragment: Fragment() {
         return ""
     }
 
-    @TaskResult
+    override fun onLoginFinished(successful: Boolean) {
+        if (successful) {
+            GetUserTask().start(this)
+        } else {
+            Toast.makeText(context, "Evernote連携に失敗しました", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    @TaskResult(id = "preference")
     fun onGetUser(user: User) {
         MyApplication.evernoteUser = user
         if (user != null) {
-            evernoteValue.text = user.username
+            preferenceViewModel.evernoteName.value = user.username
         }
     }
 

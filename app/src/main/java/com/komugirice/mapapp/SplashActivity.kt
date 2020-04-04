@@ -1,20 +1,12 @@
 package com.komugirice.mapapp
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import com.evernote.client.android.EvernoteSession
-import com.evernote.edam.type.Notebook
-import com.evernote.edam.type.User
-import com.google.gson.Gson
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
 import com.komugirice.mapapp.MyApplication.Companion.mode
 import com.komugirice.mapapp.enums.Mode
-import com.komugirice.mapapp.task.FindNotebooksTask
-import com.komugirice.mapapp.task.GetUserTask
-import kotlinx.android.synthetic.main.activity_main.*
-import net.vrallev.android.task.TaskResult
 
 /**
  * @author komugirice
