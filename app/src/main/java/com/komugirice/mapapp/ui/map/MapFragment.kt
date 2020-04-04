@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.list.listItems
 import com.evernote.client.android.type.NoteRef
+import com.evernote.edam.type.Note
 import com.evernote.edam.type.Resource
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -35,7 +36,7 @@ import com.komugirice.mapapp.databinding.ImageViewDialogBinding
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode
 import com.komugirice.mapapp.extension.makeTempFile
-import com.komugirice.mapapp.interfaces.Update
+import com.komugirice.mapapp.task.CreateNewNoteTask
 import com.komugirice.mapapp.task.FindNotesTask
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.fragment_map.view.*
@@ -72,7 +73,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var currentPhotoUri: Uri
 
 
-    private var evResource = EvResource()
+    private var mEvNotebook = EvNotebook()
+    private var mEvResource = EvResource()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -112,8 +114,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onResume() {
         super.onResume()
-        if(::mMap.isInitialized)
-            initData()
+//        if(::mMap.isInitialized)
+//            initData()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -150,7 +152,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     } else if (mode == Mode.EVERNOTE) {
                         evNotebook?.apply {
                             // ノート情報設定
-                            evResource = helper.createEvResource(imageFile, latLng, address)
+                            mEvResource = helper.createEvResource(imageFile, it, latLng, address)
                             // ノート検索タスク実行
                             FindNotesTask(0,250, evNotebook, null, null).start(this@MapFragment, "onFindNotesAndCreateOrUpdate")
                         } ?: run {
@@ -191,7 +193,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     } else if (mode == Mode.EVERNOTE) {
                         evNotebook?.apply {
                             // ノート情報設定
-                            evResource = helper.createEvResource(imageFile, latLng, address)
+                            mEvResource = helper.createEvResource(imageFile, it, latLng, address)
                             // ノート検索タスク実行
                             FindNotesTask(0,250, evNotebook, null, null).start(this@MapFragment, "onFindNotesAndCreateOrUpdate")
                         } ?: run {
@@ -346,9 +348,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                             val imageData = it.tag as ImageData
                                             helper.deleteCacheImage(imageData, images)
                                         } else {
-                                            val evImageData = it.tag as EvImageData
-                                            helper.deleteEvImage(evImageData)
+                                            val data = it.tag as EvImageData
+                                            CoroutineScope(Dispatchers.IO).launch {
+                                                helper.deleteEvResouce(data.noteGuid, data.guid)
+                                            }
                                         }
+                                        mEvResource.clear()
+                                        imageMarkers.remove(it)
                                         it.hideInfoWindow()
                                         it.remove()
                                     }
@@ -362,10 +368,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             // マーカークリック時
             this.setOnMarkerClickListener {
                 var imageData = it.tag as ImageData
-                it.title = imageData.address
-                it.showInfoWindow()
+                imageData?.apply{
+                    it.title = imageData.address
+                    it.showInfoWindow()
+                }
                 true
             }
+
         }
     }
 
@@ -439,12 +448,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
                 val note = it.loadNote(true, true, false, false)
                 val resources = note.resources
+                
+                mEvNotebook.notes.add(note)
 
                 withContext(Dispatchers.Main){
                     resources?.forEach {
                         // マーカー作成
                         val imageMarker = helper.createMarkerFromEvernote(it, note.title, mMap)
                         imageMarkers.add(imageMarker)
+
                     }
                 }
 
@@ -461,25 +473,47 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     fun onFindNotesAndCreateOrUpdate(noteRefList: List<NoteRef>?) {
 
         // タイトルが同じ郵便番号のノート
-        var targetRef: NoteRef? = noteRefList?.filter{it.title.extractPostalCode() == evResource.title.extractPostalCode()}?.firstOrNull()
+        var targetRef: NoteRef? = noteRefList?.filter{it.title.extractPostalCode() == mEvResource.title.extractPostalCode()}?.firstOrNull()
 
         targetRef?.apply {
             // ノートあり　更新
             CoroutineScope(IO).launch {
                 val note = this@apply.loadNote(true, true, false, false)
-                helper.updateNote(note, evResource)
+                mEvResource.resource.noteGuid = note.guid
+                helper.updateNoteEvResource(note, mEvResource)
+                mEvNotebook.notes.filter{ it.guid == note.guid}.first().resources.add(mEvResource.resource)
             }
+            // マーカー作成
+            val imageMarker = helper.createMarkerFromEvernote(mEvResource.resource, mEvResource.title, mMap)
+            imageMarker.showInfoWindow()
+            imageMarkers.add(imageMarker)
         } ?: run() {
             // ノートなし　新規登録
-            CoroutineScope(IO).launch {
-                helper.createNote(MyApplication.evNotebook?.guid, evResource)
-            }
+            val note = helper.createNote(MyApplication.evNotebook?.guid, mEvResource)
+            CreateNewNoteTask(note.title, note.content, null, evNotebook, null).start(this@MapFragment, "onCreateNewNote")
+//            CoroutineScope(IO).launch {
+                //MyApplication.noteStoreClient?.createNote(note)
+//            }
         }
 
-        // マーカー作成
-        val imageMarker = helper.createMarkerFromEvernote(evResource.resource, evResource.title, mMap)
-        imageMarker.showInfoWindow()
-        imageMarkers.add(imageMarker)
+
+    }
+
+    /**
+     * CreateNewNoteTask実行後、呼び出し
+     */
+    @TaskResult(id="onCreateNewNote")
+    fun onCreateNewNote(note: Note?) {
+        if (note != null) {
+            mEvNotebook.notes.add(note)
+            mEvResource.resource = note.resources.first()
+            // マーカー作成
+            val imageMarker = helper.createMarkerFromEvernote(mEvResource.resource, mEvResource.title, mMap)
+            imageMarker.showInfoWindow()
+            imageMarkers.add(imageMarker)
+        } else {
+            // エラー
+        }
     }
 
     private fun refresh() {
@@ -511,6 +545,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             var title: String = ""
             var resource: Resource = Resource()
             fun clear(){ title = ""; resource = Resource() }
+        }
+
+        class EvNotebook {
+            var guid = evNotebook?.guid ?: ""
+            var notes: MutableList<Note> = mutableListOf()
         }
     }
 }

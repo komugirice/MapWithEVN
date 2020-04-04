@@ -3,11 +3,11 @@ package com.komugirice.mapapp.ui.map
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.location.Geocoder
+import android.net.Uri
 import android.os.Environment
-import com.evernote.client.android.EvernoteSession
 import com.evernote.client.android.EvernoteUtil
-import com.evernote.client.android.type.NoteRef
 import com.evernote.client.conn.mobile.FileData
+import com.evernote.edam.type.Data
 import com.evernote.edam.type.Note
 import com.evernote.edam.type.Resource
 import com.evernote.edam.type.ResourceAttributes
@@ -20,10 +20,7 @@ import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
 import com.komugirice.mapapp.extension.extractPostalCodeAndAllAddress
 import com.komugirice.mapapp.extension.extractPostalCodeAndHalfAddress
-import java.io.BufferedInputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.IOException
+import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -55,45 +52,48 @@ object MapFragmentHelper {
     /**
      * Evernoteノート情報作成
      */
-    fun createEvResource(imageFile: File, latLng: LatLng, title: String): MapFragment.Companion.EvResource {
+    fun createEvResource(imageFile: File, uri: Uri, latLng: LatLng, title: String): MapFragment.Companion.EvResource {
         // Hash the data in the image file. The hash is used to reference the file in the ENML note content.
-        var `in` = BufferedInputStream(FileInputStream(imageFile.getPath()))
-        val data = FileData(EvernoteUtil.hash(`in`), File(imageFile.getPath()))
+        var `in` = BufferedInputStream(FileInputStream(imageFile))
+        val data = FileData(EvernoteUtil.hash(`in`), imageFile)
+
 
         val opts = BitmapFactory.Options()
         opts.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(File(imageFile.path).absolutePath, opts)
+        BitmapFactory.decodeFile(imageFile.absolutePath, opts)
 
         val attributes = ResourceAttributes()
         attributes.fileName = imageFile.name
         attributes.longitude = latLng.longitude
         attributes.latitude = latLng.latitude
 
-        val evNote = MapFragment.Companion.EvResource().apply {
+        val evResource = MapFragment.Companion.EvResource().apply {
             // クラス変数evNote設定
             this.title = title
 
             this.resource.apply{
+
                 this.data = data
+                //this.data.body = `in`.readBytes() // bodyがnullになるバグ
                 //height = opts.outHeight.toShort()
                 //width = opts.outWidth.toShort()
                 mime = "image/jpg"
                 this.attributes = attributes
+                guid = UUID.randomUUID().toString()
             }
 
         }
-        return evNote
+        return evResource
     }
 
     /**
      * Evernoteノート更新
      */
-    fun updateNote(note: Note, evResource: MapFragment.Companion.EvResource){
+    fun updateNoteEvResource(note: Note, evResource: MapFragment.Companion.EvResource){
         note.addToResources(evResource.resource)
 
         note.content = note.content.removeSuffix(EvernoteUtil.NOTE_SUFFIX) +
-                "<en-media type=\"" + evResource.resource.mime + "\" hash=\"" +
-                EvernoteUtil.bytesToHex(evResource.resource.getData().getBodyHash()) + "\"/>" +
+                EvernoteUtil.createEnMediaTag(evResource.resource) +
                 EvernoteUtil.NOTE_SUFFIX;
 
         noteStoreClient?.updateNote(note)
@@ -117,7 +117,7 @@ object MapFragmentHelper {
     /**
      * Evernoteノート新規登録
      */
-    fun createNote(notebookGuid: String?, evResource: MapFragment.Companion.EvResource){
+    fun createNote(notebookGuid: String?, evResource: MapFragment.Companion.EvResource): Note{
         val note = Note()
         note.title = evResource.title
         note.content =
@@ -129,7 +129,7 @@ object MapFragmentHelper {
         notebookGuid?.apply {
             note.notebookGuid = this
         }
-        noteStoreClient?.createNote(note)
+        return note
     }
 
     /**
@@ -163,7 +163,7 @@ object MapFragmentHelper {
             ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
         )
 
-        // 画像ファイル作成
+        // マーカー用の画像ファイル作成
         val newFile: File? = try {
             createImageFile()
         } catch (ex: IOException) {
@@ -171,8 +171,14 @@ object MapFragmentHelper {
             null
         }
         newFile?.apply {
-            // 画像ファイルにevernote取得データをコピー
-            writeBytes(resource.data.body)
+
+            try {
+                // 画像ファイルにevernote取得データをコピー
+                writeBytes(resource.data.body)
+            } catch(e: Exception) {
+                // resource.data.bodyがnullでexceptionの時がある
+                null
+            }
             // ImageData
             val evImageData = EvImageData().apply {
                 lat = resource.attributes.latitude
@@ -196,10 +202,27 @@ object MapFragmentHelper {
 
 
     }
-    fun deleteEvImage(evImage: EvImageData) {
-        val note = noteStoreClient?.getNote(evImage.noteGuid, true, true, true, false)
-        // ImageAdapterから作らざるをえない
+    fun deleteEvResouce(noteGuid: String, resourceGuid: String) {
+        var note = MyApplication.noteStoreClient?.getNote(noteGuid, true, true, true, false)
+        if(note == null) return
 
+        var targetResource = note?.resources?.filter{it.guid == resourceGuid}?.first()
+        note.resources.remove(targetResource)
+
+        if(note.resources.isNotEmpty()) {
+
+            note.content = note.content.removeSuffix(EvernoteUtil.NOTE_SUFFIX)
+            note.resources.forEach {
+                note.content += "<en-media type=\"" + it.mime + "\" hash=\"" +
+                        EvernoteUtil.bytesToHex(it.getData().getBodyHash()) + "\"/>"
+            }
+            note.content += EvernoteUtil.NOTE_SUFFIX
+
+            noteStoreClient?.updateNote(note)
+        } else {
+            noteStoreClient?.deleteNote(note.guid)
+        }
     }
+
 
 }
