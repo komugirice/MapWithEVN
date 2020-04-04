@@ -6,7 +6,6 @@ import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -29,7 +28,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.gson.Gson
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.mode
@@ -37,6 +35,7 @@ import com.komugirice.mapapp.databinding.ImageViewDialogBinding
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode
 import com.komugirice.mapapp.extension.makeTempFile
+import com.komugirice.mapapp.interfaces.Update
 import com.komugirice.mapapp.task.FindNotesTask
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.fragment_map.view.*
@@ -60,6 +59,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private var images = mutableListOf<ImageData>()
+    private var imageMarkers = mutableListOf<Marker>()
 
     // 位置
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -112,6 +112,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onResume() {
         super.onResume()
+        if(::mMap.isInitialized)
+            initData()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -128,25 +130,22 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     var latLng = focusPosition()
                     val address = helper.getPostalCodeAndHalfAddress(context, latLng)
 
-                    val imageData = ImageData().apply {
-                        lat = latLng.latitude
-                        lon = latLng.longitude
-                        filePath = "file://${imageFile.path}"
-                        this.address = address
-                    }
 
                     if (mode == Mode.CACHE) {
+
+                        val imageData = ImageData().apply {
+                            lat = latLng.latitude
+                            lon = latLng.longitude
+                            filePath = "file://${imageFile.path}"
+                            this.address = address
+                        }
+
                         images.add(imageData)
                         Prefs().allImage.put(AllImage().apply { allImage = images })
-                        val marker = mMap.addMarker(
-                            MarkerOptions().position(
-                                LatLng(
-                                    latLng.latitude,
-                                    latLng.longitude
-                                )
-                            ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-                        )
-                        marker.tag = imageData
+
+                        val imageMarker = helper.createMarker(imageData, address, mMap)
+                        imageMarker.showInfoWindow()
+                        imageMarkers.add(imageMarker)
 
                     } else if (mode == Mode.EVERNOTE) {
                         evNotebook?.apply {
@@ -171,19 +170,24 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
                     // 位置情報設定
                     var latLng: LatLng = focusPosition()
-
                     val address = helper.getPostalCodeAndHalfAddress(context, latLng)
 
-                    val imageData = ImageData().apply {
-                        lat = latLng.latitude
-                        lon = latLng.longitude
-                        filePath = "file://${imageFile.path}"
-                        this.address = address
-                    }
-
                     if (mode == Mode.CACHE) {
+
+                        val imageData = ImageData().apply {
+                            lat = latLng.latitude
+                            lon = latLng.longitude
+                            filePath = "file://${imageFile.path}"
+                            this.address = address
+                        }
+
                         images.add(imageData)
                         Prefs().allImage.put(AllImage().apply { allImage = images })
+
+                        val imageMarker = helper.createMarker(imageData, address, mMap)
+                        imageMarker.showInfoWindow()
+                        imageMarkers.add(imageMarker)
+
                     } else if (mode == Mode.EVERNOTE) {
                         evNotebook?.apply {
                             // ノート情報設定
@@ -367,6 +371,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
 
     private fun initData() {
+        imageMarkers.forEach { it.remove() }
+        imageMarkers.clear()
         // アプリ内キャッシュ
         if (mode == Mode.CACHE) {
             images.addAll(Prefs().allImage.get().blockingSingle().allImage)
@@ -376,6 +382,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
                 )
                 marker.tag = it
+                imageMarkers.add(marker)
             }
         }
         // TODO Evernote
@@ -436,7 +443,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 withContext(Dispatchers.Main){
                     resources?.forEach {
                         // マーカー作成
-                        helper.createMarkerFromEvernote(it, note.title, mMap)
+                        val imageMarker = helper.createMarkerFromEvernote(it, note.title, mMap)
+                        imageMarkers.add(imageMarker)
                     }
                 }
 
@@ -469,8 +477,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
 
         // マーカー作成
-        helper.createMarkerFromEvernote(evResource.resource, evResource.title, mMap)
-
+        val imageMarker = helper.createMarkerFromEvernote(evResource.resource, evResource.title, mMap)
+        imageMarker.showInfoWindow()
+        imageMarkers.add(imageMarker)
     }
 
     private fun refresh() {

@@ -14,6 +14,7 @@ import com.evernote.edam.type.ResourceAttributes
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
@@ -131,11 +132,37 @@ object MapFragmentHelper {
         noteStoreClient?.createNote(note)
     }
 
+    /**
+     * マーカー作成
+     */
+    fun createMarker(imageData: ImageData, address: String, mMap: GoogleMap): Marker {
+
+        val marker = mMap.addMarker(
+            MarkerOptions().position(
+                LatLng(
+                    imageData.lat,
+                    imageData.lon
+                )
+            ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+        )
+        marker.tag = imageData
+        return marker
+    }
+
 
     /**
      * Evernoteデータからのマーカー作成
      */
-    fun createMarkerFromEvernote(resource: Resource, address: String, mMap: GoogleMap) {
+    fun createMarkerFromEvernote(resource: Resource, address: String, mMap: GoogleMap): Marker {
+        var marker = mMap.addMarker(
+            MarkerOptions().position(
+                LatLng(
+                    resource.attributes.latitude,
+                    resource.attributes.longitude
+                )
+            ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+        )
+
         // 画像ファイル作成
         val newFile: File? = try {
             createImageFile()
@@ -146,14 +173,6 @@ object MapFragmentHelper {
         newFile?.apply {
             // 画像ファイルにevernote取得データをコピー
             writeBytes(resource.data.body)
-            var marker = mMap.addMarker(
-                MarkerOptions().position(
-                    LatLng(
-                        resource.attributes.latitude,
-                        resource.attributes.longitude
-                    )
-                ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-            )
             // ImageData
             val evImageData = EvImageData().apply {
                 lat = resource.attributes.latitude
@@ -164,7 +183,9 @@ object MapFragmentHelper {
                 noteGuid = resource.noteGuid
             }
             marker.tag = evImageData
+
         }
+        return marker
     }
 
     fun deleteCacheImage(imageData: ImageData,

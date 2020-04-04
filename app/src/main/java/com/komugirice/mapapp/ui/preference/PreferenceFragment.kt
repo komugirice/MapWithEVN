@@ -19,7 +19,9 @@ import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
 import com.komugirice.mapapp.Prefs
 import com.komugirice.mapapp.R
 import com.komugirice.mapapp.enums.Mode
+import com.komugirice.mapapp.interfaces.Update
 import com.komugirice.mapapp.task.GetUserTask
+import com.komugirice.mapapp.ui.map.MapFragment
 import com.komugirice.mapapp.ui.notebook.NotebookNameActivity
 import kotlinx.android.synthetic.main.activity_header.*
 import kotlinx.android.synthetic.main.fragment_preference.*
@@ -112,6 +114,7 @@ class PreferenceFragment: Fragment(),
         }
 
     }
+
 
     private fun initClick(){
         backImageView.setOnClickListener {

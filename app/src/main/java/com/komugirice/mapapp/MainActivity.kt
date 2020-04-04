@@ -19,8 +19,10 @@ import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.evernoteUser
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
 import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
+import com.komugirice.mapapp.interfaces.Update
 import com.komugirice.mapapp.task.FindNotebooksTask
 import com.komugirice.mapapp.task.GetUserTask
+import com.komugirice.mapapp.ui.map.MapFragment
 import kotlinx.android.synthetic.main.activity_main.*
 import net.vrallev.android.task.TaskResult
 
