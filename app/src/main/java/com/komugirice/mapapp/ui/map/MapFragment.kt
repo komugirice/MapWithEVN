@@ -143,7 +143,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         images.add(imageData)
                         Prefs().allImage.put(AllImage().apply { allImage = images })
 
-                        val imageMarker = helper.createMarker(imageData, address, mMap)
+                        val imageMarker = helper.createMarker(imageData, mMap)
                         imageMarker.showInfoWindow()
                         imageMarkers.add(imageMarker)
 
@@ -184,7 +184,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         images.add(imageData)
                         Prefs().allImage.put(AllImage().apply { allImage = images })
 
-                        val imageMarker = helper.createMarker(imageData, address, mMap)
+                        val imageMarker = helper.createMarker(imageData, mMap)
                         imageMarker.showInfoWindow()
                         imageMarkers.add(imageMarker)
 
@@ -479,23 +479,31 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
             // ノートあり　更新
             CoroutineScope(IO).launch {
-                val note = this@apply.loadNote(true, true, false, false)
-                mEvResource.resource.noteGuid = note.guid
-                helper.updateNoteEvResource(note, mEvResource)
-                mEvNotebook.notes.filter{ it.guid == note.guid}.first().resources.add(mEvResource.resource)
+                async {
+                    val note = this@apply.loadNote(true, true, false, false)
+                    mEvResource.resource.noteGuid = note.guid
+                    helper.updateNoteEvResource(note, mEvResource)
+                    mEvNotebook.notes.filter{ it.guid == note.guid}.first().resources.add(mEvResource.resource)
+                }.await()
+
+                withContext(Main){
+                    // マーカー作成
+                    val imageMarker = helper.createMarker(mEvResource, mMap)
+                    imageMarker.showInfoWindow()
+                    imageMarkers.add(imageMarker)
+                }
             }
-            // マーカー作成
-            val imageMarker = helper.createMarkerFromEvernote(mEvResource.resource, mEvResource.title, mMap)
-            imageMarker.showInfoWindow()
-            imageMarkers.add(imageMarker)
+
 
         } ?: run() {
 
             // ノートなし　新規登録
             val note = helper.createNote(MyApplication.evNotebook?.guid, mEvResource)
+
             // resource.body = nullでエラー。使えず。EDAMUserException(errorCode:ENML_VALIDATION, parameter:The processing instruction target matching "[xX][mM][lL]" is not allowed.
             //CreateNewNoteTask(note.title, note.content, null, evNotebook, null).start(this@MapFragment, "onCreateNewNote")
 
+            // 上記の代替処理
             CoroutineScope(IO).launch {
                 async {
                     MyApplication.noteStoreClient?.createNote(note)
@@ -527,7 +535,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             mEvNotebook.notes.add(note)
             mEvResource.resource = note.resources.first()
             // マーカー作成
-            val imageMarker = helper.createMarkerFromEvernote(mEvResource.resource, mEvResource.title, mMap)
+            val imageMarker = helper.createMarker(mEvResource, mMap)
             imageMarker.showInfoWindow()
             imageMarkers.add(imageMarker)
         } else {
@@ -562,6 +570,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
          */
         class EvResource {
             var title: String = ""
+            var filePath: String = ""
             var resource: Resource = Resource()
             fun clear(){ title = ""; resource = Resource() }
         }

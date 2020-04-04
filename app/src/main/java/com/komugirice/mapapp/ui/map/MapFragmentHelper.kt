@@ -70,6 +70,7 @@ object MapFragmentHelper {
         val evResource = MapFragment.Companion.EvResource().apply {
             // クラス変数evNote設定
             this.title = title
+            this.filePath = imageFile.absolutePath
 
             this.resource.apply{
 
@@ -135,7 +136,7 @@ object MapFragmentHelper {
     /**
      * マーカー作成
      */
-    fun createMarker(imageData: ImageData, address: String, mMap: GoogleMap): Marker {
+    fun createMarker(imageData: ImageData, mMap: GoogleMap): Marker {
 
         val marker = mMap.addMarker(
             MarkerOptions().position(
@@ -149,6 +150,32 @@ object MapFragmentHelper {
         return marker
     }
 
+    /**
+     * マーカー作成
+     */
+    fun createMarker(evResource: MapFragment.Companion.EvResource, mMap: GoogleMap): Marker {
+
+        val marker = mMap.addMarker(
+            MarkerOptions().position(
+                LatLng(
+                    evResource.resource.attributes.latitude,
+                    evResource.resource.attributes.longitude
+                )
+            ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+        )
+
+        // EvImageData
+        val evImageData = EvImageData().apply {
+            lat = evResource.resource.attributes.latitude
+            lon = evResource.resource.attributes.longitude
+            filePath = "file://${evResource.filePath}"
+            this.address = evResource.title
+            guid = evResource.resource.guid
+            noteGuid = evResource.resource.noteGuid
+        }
+        marker.tag = evImageData
+        return marker
+    }
 
     /**
      * Evernoteデータからのマーカー作成
@@ -179,7 +206,7 @@ object MapFragmentHelper {
                 // resource.data.bodyがnullでexceptionの時がある
                 null
             }
-            // ImageData
+            // EvImageData
             val evImageData = EvImageData().apply {
                 lat = resource.attributes.latitude
                 lon = resource.attributes.longitude
