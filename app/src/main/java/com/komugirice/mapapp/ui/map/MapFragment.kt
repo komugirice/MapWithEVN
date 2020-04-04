@@ -511,16 +511,31 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
                 withContext(Main){
                     // 再度ノート検索タスク実行
-                    imageMarkers.forEach { it.remove() }
-                    imageMarkers.clear()
-                    FindNotesTask(0, 250, evNotebook, null, null).start(this@MapFragment, "onInitFindNotes")
+                    FindNotesTask(0, 250, evNotebook, null, null).start(this@MapFragment, "onAfterCreateNote")
+                }
+            }
+        }
+    }
+
+    @TaskResult(id = "onAfterCreateNote")
+    fun onAfterCreateNote(noteRefList: List<NoteRef>?) {
+
+        CoroutineScope(IO).launch {
+
+            var targetRef: NoteRef? = noteRefList?.filter{it.title.extractPostalCode() == mEvResource.title.extractPostalCode()}?.firstOrNull()
+            targetRef?.apply {
+                val note = this.loadNote(true, true, false, false)
+                mEvNotebook.notes.add(note)
+
+                withContext(Dispatchers.Main){
+                    // マーカー作成
+                    val resource = note.resources.first() // 必ず一つ
+                    val imageMarker = helper.createMarkerFromEvernote(resource, note.title, mMap)
+                    imageMarkers.add(imageMarker)
                 }
             }
 
-
         }
-
-
     }
 
     /**
