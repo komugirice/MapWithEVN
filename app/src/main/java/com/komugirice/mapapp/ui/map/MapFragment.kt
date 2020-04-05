@@ -36,6 +36,7 @@ import com.komugirice.mapapp.databinding.ImageViewDialogBinding
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode
 import com.komugirice.mapapp.extension.makeTempFile
+import com.komugirice.mapapp.extension.makeTempFileToStorage
 import com.komugirice.mapapp.task.CreateNewNoteTask
 import com.komugirice.mapapp.task.FindNotesTask
 import com.squareup.picasso.Picasso
@@ -123,16 +124,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         // 写真選択
         if (requestCode == REQUEST_CODE_CHOOSE_IMAGE)
             data.data?.also {
-                val imageFile = it.makeTempFile()
-                if (imageFile != null) {
 
-                    // 位置情報設定
-                    var latLng = focusPosition()
-                    val address = helper.getPostalCodeAndHalfAddress(context, latLng)
+                // 位置情報設定
+                var latLng = focusPosition()
+                val address = helper.getPostalCodeAndHalfAddress(context, latLng)
 
 
-                    if (mode == Mode.CACHE) {
-
+                if (mode == Mode.CACHE) {
+                    var imageFile = it.makeTempFileToStorage()
+                    if (imageFile != null) {
                         val imageData = ImageData().apply {
                             lat = latLng.latitude
                             lon = latLng.longitude
@@ -146,34 +146,44 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         val imageMarker = helper.createMarker(imageData, mMap)
                         imageMarker.showInfoWindow()
                         imageMarkers.add(imageMarker)
+                    }
 
-                    } else if (mode == Mode.EVERNOTE) {
+                } else if (mode == Mode.EVERNOTE) {
+                    val imageFile = it.makeTempFile()
+                    if (imageFile != null) {
                         evNotebook?.apply {
                             // ノート情報設定
-                            mEvResource = helper.createEvResource(imageFile, it, latLng, address)
+                            mEvResource =
+                                helper.createEvResource(imageFile, it, latLng, address)
                             // ノート検索タスク実行
-                            FindNotesTask(0,250, evNotebook, null, null).start(this@MapFragment, "onFindNotesAndCreateOrUpdate")
+                            FindNotesTask(
+                                0,
+                                250,
+                                evNotebook,
+                                null,
+                                null
+                            ).start(this@MapFragment, "onFindNotesAndCreateOrUpdate")
                         } ?: run {
                             // ノートブック存在エラー
-                            Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG)
+                                .show()
                         }
                     }
-                    // TODO progress
-                    //start(context)
                 }
+                // TODO progress
+                //start(context)
             }
         // カメラ
         if(requestCode == REQUEST_CODE_CAMERA)
             currentPhotoUri.also {
-                val imageFile = it.makeTempFile()
-                if (imageFile != null) {
 
-                    // 位置情報設定
-                    var latLng: LatLng = focusPosition()
-                    val address = helper.getPostalCodeAndHalfAddress(context, latLng)
+                // 位置情報設定
+                var latLng: LatLng = focusPosition()
+                val address = helper.getPostalCodeAndHalfAddress(context, latLng)
 
-                    if (mode == Mode.CACHE) {
-
+                if (mode == Mode.CACHE) {
+                    var imageFile = it.makeTempFileToStorage()
+                    if (imageFile != null) {
                         val imageData = ImageData().apply {
                             lat = latLng.latitude
                             lon = latLng.longitude
@@ -187,21 +197,31 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         val imageMarker = helper.createMarker(imageData, mMap)
                         imageMarker.showInfoWindow()
                         imageMarkers.add(imageMarker)
-
-                    } else if (mode == Mode.EVERNOTE) {
+                    }
+                } else if (mode == Mode.EVERNOTE) {
+                    var imageFile = it.makeTempFile()
+                    if (imageFile != null) {
                         evNotebook?.apply {
                             // ノート情報設定
-                            mEvResource = helper.createEvResource(imageFile, it, latLng, address)
+                            mEvResource =
+                                helper.createEvResource(imageFile, it, latLng, address)
                             // ノート検索タスク実行
-                            FindNotesTask(0,250, evNotebook, null, null).start(this@MapFragment, "onFindNotesAndCreateOrUpdate")
+                            FindNotesTask(
+                                0,
+                                250,
+                                evNotebook,
+                                null,
+                                null
+                            ).start(this@MapFragment, "onFindNotesAndCreateOrUpdate")
                         } ?: run {
                             // ノートブック存在エラー
-                            Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG)
+                                .show()
                         }
                     }
-                    // TODO progress
-                    //start(context)
                 }
+                // TODO progress
+                //start(context)
             }
 
     }
@@ -409,7 +429,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 takePictureIntent.resolveActivity(packageManager)?.also {
                     // Create the File where the photo should go
                     val photoFile: File? = try {
-                        helper.createImageFile()
+                        helper.createImageFileToCache()
+
                     } catch (ex: IOException) {
                         // Error occurred while creating the File
                         null
