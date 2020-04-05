@@ -17,6 +17,8 @@ import androidx.fragment.app.Fragment
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.list.listItems
 import com.evernote.client.android.type.NoteRef
+import com.evernote.edam.error.EDAMErrorCode
+import com.evernote.edam.error.EDAMUserException
 import com.evernote.edam.type.Note
 import com.evernote.edam.type.Resource
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -45,6 +47,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import net.vrallev.android.task.TaskResult
+import timber.log.Timber
 import java.io.File
 import java.io.IOException
 
@@ -494,49 +497,86 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     @TaskResult(id = "onFindNotesAndCreateOrUpdate")
     fun onFindNotesAndCreateOrUpdate(noteRefList: List<NoteRef>?) {
 
-        // タイトルが同じ郵便番号のノート
-        var targetRef: NoteRef? = noteRefList?.filter{it.title.extractPostalCode() == mEvResource.title.extractPostalCode()}?.firstOrNull()
 
-        targetRef?.apply {
+            // タイトルが同じ郵便番号のノート
+            var targetRef: NoteRef? =
+                noteRefList?.filter { it.title.extractPostalCode() == mEvResource.title.extractPostalCode() }
+                    ?.firstOrNull()
 
-            // ノートあり　更新
-            CoroutineScope(IO).launch {
-                async {
-                    val note = this@apply.loadNote(true, true, false, false)
-                    mEvResource.resource.noteGuid = note.guid
-                    helper.updateNoteEvResource(note, mEvResource)
-                    mEvNotebook.notes.filter{ it.guid == note.guid}.first().resources.add(mEvResource.resource)
-                }.await()
+            targetRef?.apply {
 
-                withContext(Main){
-                    // マーカー作成
-                    val imageMarker = helper.createMarker(mEvResource, mMap)
-                    imageMarker.showInfoWindow()
-                    imageMarkers.add(imageMarker)
+                // ノートあり　更新
+                CoroutineScope(IO).launch {
+                    async {
+                        val note = this@apply.loadNote(true, true, false, false)
+                        mEvResource.resource.noteGuid = note.guid
+
+                        try {
+                            helper.updateNoteEvResource(note, mEvResource)
+                            mEvNotebook.notes.filter { it.guid == note.guid }.first().resources.add(
+                                mEvResource.resource
+                            )
+                        }catch(e: EDAMUserException) {
+                            withContext(Main) {
+                                Timber.e(e)
+                                if(e.errorCode == EDAMErrorCode.QUOTA_REACHED)
+                                    Toast.makeText(
+                                        context,
+                                        "Evernoteアカウントのアップロード容量上限に達しました",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                            }
+                            cancel()
+                        }
+                    }.await()
+
+                    withContext(Main) {
+                        // マーカー作成
+                        val imageMarker = helper.createMarker(mEvResource, mMap)
+                        imageMarker.showInfoWindow()
+                        imageMarkers.add(imageMarker)
+                    }
+                }
+
+
+            } ?: run() {
+
+
+                // ノートなし　新規登録
+                val note = helper.createNote(MyApplication.evNotebook?.guid, mEvResource)
+
+                // resource.body = nullでエラー。使えず。EDAMUserException(errorCode:ENML_VALIDATION, parameter:The processing instruction target matching "[xX][mM][lL]" is not allowed.
+                //CreateNewNoteTask(note.title, note.content, null, evNotebook, null).start(this@MapFragment, "onCreateNewNote")
+
+                // 上記の代替処理
+                CoroutineScope(IO).launch {
+                    async {
+                        try {
+                            val note = MyApplication.noteStoreClient?.createNote(note)
+                        }catch(e: EDAMUserException) {
+                            withContext(Main) {
+                                Timber.e(e)
+                                if(e.errorCode == EDAMErrorCode.QUOTA_REACHED)
+                                    Toast.makeText(
+                                        context,
+                                        "Evernoteアカウントのアップロード容量上限に達しました",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                            }
+                            cancel()
+                        }
+                    }.await()
+
+                    withContext(Main) {
+                        // 再度ノート検索タスク実行
+                        FindNotesTask(0, 250, evNotebook, null, null).start(
+                            this@MapFragment,
+                            "onAfterCreateNote"
+                        )
+                    }
                 }
             }
 
-
-        } ?: run() {
-
-            // ノートなし　新規登録
-            val note = helper.createNote(MyApplication.evNotebook?.guid, mEvResource)
-
-            // resource.body = nullでエラー。使えず。EDAMUserException(errorCode:ENML_VALIDATION, parameter:The processing instruction target matching "[xX][mM][lL]" is not allowed.
-            //CreateNewNoteTask(note.title, note.content, null, evNotebook, null).start(this@MapFragment, "onCreateNewNote")
-
-            // 上記の代替処理
-            CoroutineScope(IO).launch {
-                async {
-                    MyApplication.noteStoreClient?.createNote(note)
-                }.await()
-
-                withContext(Main){
-                    // 再度ノート検索タスク実行
-                    FindNotesTask(0, 250, evNotebook, null, null).start(this@MapFragment, "onAfterCreateNote")
-                }
-            }
-        }
     }
 
     @TaskResult(id = "onAfterCreateNote")

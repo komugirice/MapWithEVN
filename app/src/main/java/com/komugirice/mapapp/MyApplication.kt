@@ -7,6 +7,7 @@ import com.evernote.client.android.asyncclient.EvernoteNoteStoreClient
 import com.evernote.edam.type.Notebook
 import com.evernote.edam.type.User
 import com.komugirice.mapapp.enums.Mode
+import timber.log.Timber
 import java.util.*
 
 /**
@@ -45,8 +46,17 @@ class MyApplication: Application() {
     override fun onCreate() {
         super.onCreate()
         MyApplication.applicationContext = applicationContext
+        initialize()
 
-        //Set up the Evernote singleton session, use EvernoteSession.getInstance() later
+
+    }
+
+    private fun initialize() {
+        initEvernoteSession()
+        initTimber()
+    }
+
+    private fun initEvernoteSession() {
         //Set up the Evernote singleton session, use EvernoteSession.getInstance() later
         EvernoteSession.Builder(this)
             .setEvernoteService(EVERNOTE_SERVICE)
@@ -55,6 +65,10 @@ class MyApplication: Application() {
             .setLocale(Locale.JAPANESE)
             .build(CONSUMER_KEY, CONSUMER_SECRET)
             .asSingleton()
+    }
+
+    private fun initTimber() {
+        Timber.plant(Timber.DebugTree())
     }
 
     companion object {

@@ -5,8 +5,10 @@ import android.graphics.BitmapFactory
 import android.location.Geocoder
 import android.net.Uri
 import android.os.Environment
+import android.widget.Toast
 import com.evernote.client.android.EvernoteUtil
 import com.evernote.client.conn.mobile.FileData
+import com.evernote.edam.error.EDAMUserException
 import com.evernote.edam.type.Data
 import com.evernote.edam.type.Note
 import com.evernote.edam.type.Resource
@@ -20,6 +22,10 @@ import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
 import com.komugirice.mapapp.extension.extractPostalCodeAndAllAddress
 import com.komugirice.mapapp.extension.extractPostalCodeAndHalfAddress
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -265,6 +271,5 @@ object MapFragmentHelper {
             noteStoreClient?.deleteNote(note.guid)
         }
     }
-
 
 }
