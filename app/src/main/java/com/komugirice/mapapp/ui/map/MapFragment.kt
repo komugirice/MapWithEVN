@@ -402,6 +402,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         imageMarkers.clear()
         // アプリ内キャッシュ
         if (mode == Mode.CACHE) {
+            images.clear()
             images.addAll(Prefs().allImage.get().blockingSingle().allImage)
             images.forEach {
                 var marker = mMap.addMarker(
