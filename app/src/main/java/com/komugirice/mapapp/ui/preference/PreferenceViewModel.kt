@@ -33,7 +33,8 @@ class PreferenceViewModel : ViewModel() {
 
         evernoteName.value = evernoteUser?.username ?: "なし"
 
-        val prefName = Prefs().notebookName.get().blockingSingle()
+        var prefName = Prefs().notebookName.get().blockingSingle()
+        if(prefName.isEmpty()) prefName = "なし"
         notebookName.value = prefName
     }
 

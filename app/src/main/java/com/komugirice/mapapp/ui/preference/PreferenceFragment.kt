@@ -2,12 +2,14 @@ package com.komugirice.mapapp.ui.preference
 
 
 import android.os.Bundle
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.core.os.postDelayed
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -35,6 +37,8 @@ class PreferenceFragment: Fragment(),
     EvernoteLoginFragment.ResultCallback {
 
     private lateinit var preferenceViewModel: PreferenceViewModel
+
+    private val handler = Handler()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -75,7 +79,10 @@ class PreferenceFragment: Fragment(),
         // evernote連携再設定
         isEvernoteLoggedIn = EvernoteSession.getInstance().isLoggedIn
         if(isEvernoteLoggedIn){
-            GetUserTask().start(this, "preference")
+            handler.postDelayed({
+                GetUserTask().start(this, "preference")
+            }, 100L)
+
         }
 
         preferenceViewModel.initData()
@@ -135,6 +142,9 @@ class PreferenceFragment: Fragment(),
         return ""
     }
 
+    /**
+     * 呼び出されていない
+     */
     override fun onLoginFinished(successful: Boolean) {
         if (successful) {
             GetUserTask().start(this)
