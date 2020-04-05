@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavGraph
@@ -13,6 +14,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.evernote.client.android.EvernoteSession
+import com.evernote.client.android.login.EvernoteLoginFragment
 import com.evernote.edam.type.Notebook
 import com.evernote.edam.type.User
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
@@ -29,7 +31,8 @@ import net.vrallev.android.task.TaskResult
 /**
  * @author komugirice
  */
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(),
+    EvernoteLoginFragment.ResultCallback{
 
     // drawer
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -118,6 +121,18 @@ class MainActivity : AppCompatActivity() {
                         return
                     }
                 }
+        }
+    }
+
+
+    /**
+     * PreferenceFragmentの呼び出し機能だが、activityでないと実装できない
+     */
+    override fun onLoginFinished(successful: Boolean) {
+        if (successful) {
+            GetUserTask().start(this, "onLoginFinished")
+        } else {
+            Toast.makeText(this, "Evernote連携に失敗しました", Toast.LENGTH_LONG).show()
         }
     }
 

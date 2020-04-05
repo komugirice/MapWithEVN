@@ -33,8 +33,7 @@ import net.vrallev.android.task.TaskResult
 /**
  * @author komugirice
  */
-class PreferenceFragment: Fragment(),
-    EvernoteLoginFragment.ResultCallback {
+class PreferenceFragment: Fragment() {
 
     private lateinit var preferenceViewModel: PreferenceViewModel
 
@@ -80,7 +79,7 @@ class PreferenceFragment: Fragment(),
         isEvernoteLoggedIn = EvernoteSession.getInstance().isLoggedIn
         if(isEvernoteLoggedIn){
             handler.postDelayed({
-                GetUserTask().start(this, "preference")
+                GetUserTask().start(this, "init")
             }, 100L)
 
         }
@@ -129,7 +128,7 @@ class PreferenceFragment: Fragment(),
         }
         evernoteValue.setOnClickListener {
 //            if(!isEvernoteLoggedIn)
-                EvernoteSession.getInstance().authenticate(this.activity)
+                EvernoteSession.getInstance().authenticate(this.requireActivity())
         }
         notebookValue.setOnClickListener {
             NotebookNameActivity.start(this.activity)
@@ -142,22 +141,22 @@ class PreferenceFragment: Fragment(),
         return ""
     }
 
-    /**
-     * 呼び出されていない
-     */
-    override fun onLoginFinished(successful: Boolean) {
-        if (successful) {
-            GetUserTask().start(this)
-        } else {
-            Toast.makeText(context, "Evernote連携に失敗しました", Toast.LENGTH_LONG).show()
-        }
-    }
-
-    @TaskResult(id = "preference")
+    @TaskResult(id = "init")
     fun onGetUser(user: User) {
         MyApplication.evernoteUser = user
         if (user != null) {
             preferenceViewModel.evernoteName.value = user.username
+        }
+    }
+
+    @TaskResult(id = "onLoginFinished")
+    fun onLoginFinishedGetUser(user: User) {
+        MyApplication.evernoteUser = user
+        if (user != null) {
+            preferenceViewModel.evernoteName.value = user.username
+            // ノートブック削除
+            Prefs().notebookName.remove()
+            preferenceViewModel.notebookName.value = "なし"
         }
     }
 
