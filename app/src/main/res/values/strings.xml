@@ -17,6 +17,7 @@
     <string name="evernote_label">Evernote連携ユーザ</string>
     <string name="alert_create_notebook">ノートブック名が存在しません。「%1$s」を新しく作成しますか？</string>
     <string name="success_create_notebook">「%1$s」を作成しました</string>
+    <string name="failed_create_notebook">ノートブック「%1$s」の作成に失敗しました</string>
     <string name="yes">はい</string>
     <string name="no">いいえ</string>
     <!-- map -->

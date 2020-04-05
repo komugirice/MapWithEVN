@@ -83,9 +83,11 @@ class NotebookNameActivity : AppCompatActivity() {
                                 noteStoreClient.createNotebook(notebook)
                             }
                             Prefs().notebookName.put(notebookName)
-                            MyApplication.evNotebook = notebook
-                            Toast.makeText(this@NotebookNameActivity, getString(R.string.success_create_notebook, notebookName), Toast.LENGTH_LONG).show()
-                            finish()
+                            // 検索で使えない
+                            //MyApplication.evNotebook = notebook
+                            // notebook取得
+                            FindNotebooksTask().start(this@NotebookNameActivity, "onCreated");
+
                         }
                     })
                     .setNeutralButton(R.string.no, object : DialogInterface.OnClickListener {
@@ -108,6 +110,23 @@ class NotebookNameActivity : AppCompatActivity() {
             }
         }
         mutableIsUpdate.postValue(false)
+    }
+
+    @TaskResult(id = "onCreated")
+    fun onCreatedNotebook(notebooks: List<Notebook?>?) {
+        val text = notebookNameEditText.text.toString()
+        notebooks?.forEach {
+            if(it != null && it?.name == text) {
+                MyApplication.evNotebook = it // グローバル変数のノートブック更新
+                mutableIsUpdate.postValue(true)
+                Toast.makeText(this@NotebookNameActivity, getString(R.string.success_create_notebook, text), Toast.LENGTH_LONG).show()
+                finish()
+                return
+            }
+        }
+        mutableIsUpdate.postValue(false)
+        Toast.makeText(this@NotebookNameActivity, getString(R.string.failed_create_notebook, text), Toast.LENGTH_LONG).show()
+
     }
 
     companion object {
