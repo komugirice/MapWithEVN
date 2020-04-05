@@ -61,7 +61,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private val helper = MapFragmentHelper
 
     private lateinit var mMap: GoogleMap
+
+    // アプリ内保存
     private var images = mutableListOf<ImageData>()
+    // Evernote保存
+    private var mEvNotebook = EvNotebook()
+    private var mEvResource = EvResource()
+
     private var imageMarkers = mutableListOf<Marker>()
 
     // 位置
@@ -73,10 +79,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     // 写真
     private lateinit var currentPhotoPath: String
     private lateinit var currentPhotoUri: Uri
-
-
-    private var mEvNotebook = EvNotebook()
-    private var mEvResource = EvResource()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -124,108 +126,68 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode != AppCompatActivity.RESULT_OK || data == null)
             return
+
+        var uri: Uri? = null
+
         // 写真選択
         if (requestCode == REQUEST_CODE_CHOOSE_IMAGE)
-            data.data?.also {
+            uri = data.data
 
-                // 位置情報設定
-                var latLng = focusPosition()
-                val address = helper.getPostalCodeAndHalfAddress(context, latLng)
-
-
-                if (mode == Mode.CACHE) {
-                    var imageFile = it.makeTempFileToStorage()
-                    if (imageFile != null) {
-                        val imageData = ImageData().apply {
-                            lat = latLng.latitude
-                            lon = latLng.longitude
-                            filePath = "file://${imageFile.path}"
-                            this.address = address
-                        }
-
-                        images.add(imageData)
-                        Prefs().allImage.put(AllImage().apply { allImage = images })
-
-                        val imageMarker = helper.createMarker(imageData, mMap)
-                        imageMarker.showInfoWindow()
-                        imageMarkers.add(imageMarker)
-                    }
-
-                } else if (mode == Mode.EVERNOTE) {
-                    val imageFile = it.makeTempFile()
-                    if (imageFile != null) {
-                        evNotebook?.apply {
-                            // ノート情報設定
-                            mEvResource =
-                                helper.createEvResource(imageFile, it, latLng, address)
-                            // ノート検索タスク実行
-                            FindNotesTask(
-                                0,
-                                250,
-                                evNotebook,
-                                null,
-                                null
-                            ).start(this@MapFragment, "onFindNotesAndCreateOrUpdate")
-                        } ?: run {
-                            // ノートブック存在エラー
-                            Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG)
-                                .show()
-                        }
-                    }
-                }
-                // TODO progress
-                //start(context)
-            }
         // カメラ
         if(requestCode == REQUEST_CODE_CAMERA)
-            currentPhotoUri.also {
+            uri = currentPhotoUri
 
-                // 位置情報設定
-                var latLng: LatLng = focusPosition()
-                val address = helper.getPostalCodeAndHalfAddress(context, latLng)
 
-                if (mode == Mode.CACHE) {
-                    var imageFile = it.makeTempFileToStorage()
-                    if (imageFile != null) {
-                        val imageData = ImageData().apply {
-                            lat = latLng.latitude
-                            lon = latLng.longitude
-                            filePath = "file://${imageFile.path}"
-                            this.address = address
-                        }
+        uri?.also {
 
-                        images.add(imageData)
-                        Prefs().allImage.put(AllImage().apply { allImage = images })
+            // 位置情報設定
+            var latLng: LatLng = focusPosition()
+            val address = helper.getPostalCodeAndHalfAddress(context, latLng)
 
-                        val imageMarker = helper.createMarker(imageData, mMap)
-                        imageMarker.showInfoWindow()
-                        imageMarkers.add(imageMarker)
+            if (mode == Mode.CACHE) {
+                // キャッシュ
+                var imageFile = it.makeTempFileToStorage()
+                if (imageFile != null) {
+                    val imageData = ImageData().apply {
+                        lat = latLng.latitude
+                        lon = latLng.longitude
+                        filePath = "file://${imageFile.path}"
+                        this.address = address
                     }
-                } else if (mode == Mode.EVERNOTE) {
-                    var imageFile = it.makeTempFile()
-                    if (imageFile != null) {
-                        evNotebook?.apply {
-                            // ノート情報設定
-                            mEvResource =
-                                helper.createEvResource(imageFile, it, latLng, address)
-                            // ノート検索タスク実行
-                            FindNotesTask(
-                                0,
-                                250,
-                                evNotebook,
-                                null,
-                                null
-                            ).start(this@MapFragment, "onFindNotesAndCreateOrUpdate")
-                        } ?: run {
-                            // ノートブック存在エラー
-                            Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG)
-                                .show()
-                        }
+
+                    images.add(imageData)
+                    Prefs().allImage.put(AllImage().apply { allImage = images })
+
+                    val imageMarker = helper.createMarker(imageData, mMap)
+                    imageMarker.showInfoWindow()
+                    imageMarkers.add(imageMarker)
+                }
+            } else if (mode == Mode.EVERNOTE) {
+                // Evernote
+                var imageFile = it.makeTempFile()
+                if (imageFile != null) {
+                    evNotebook?.apply {
+                        // ノート情報設定
+                        mEvResource =
+                            helper.createEvResource(imageFile, it, latLng, address)
+                        // ノート検索タスク実行
+                        FindNotesTask(
+                            0,
+                            250,
+                            evNotebook,
+                            null,
+                            null
+                        ).start(this@MapFragment, "onFindNotesAndCreateOrUpdate")
+                    } ?: run {
+                        // ノートブック存在エラー
+                        Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG)
+                            .show()
                     }
                 }
-                // TODO progress
-                //start(context)
             }
+            // TODO progress
+            //start(context)
+        }
 
     }
 
@@ -266,15 +228,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
         }
         initData()
-//        fusedLocationClient.lastLocation.addOnSuccessListener { location : Location? ->
-            // Got last known location. In some rare situations this can be null.
-//            CURRENT_LAT = location?.latitude ?: TOKYO_LAT
-//            CURRENT_LON = location?.longitude ?: TOKYO_LON
-
-//        val sydney = LatLng(-34.0, 151.0)
-//        mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
-//        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
-//        }
 
         // タップした時のリスナーをセット
         mMap.setOnMapClickListener {
@@ -322,6 +275,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             // InfoWindowクリック時
             this.setOnInfoWindowClickListener {
                 var imageData = it.tag as ImageData
+                // 位置マーカーの場合（filePathなし）
                 if(imageData.filePath.isEmpty()) {
                     it.hideInfoWindow()
                     return@setOnInfoWindowClickListener
@@ -331,7 +285,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 context?.apply {
                     val imageView = ImageView(this)
                     Picasso.get().load(imageData.filePath).into(imageView)
-
+                    // 画像拡大ダイアログ表示
                     MaterialDialog(this).apply {
                         cancelable(true)
                         val dialogBinding = ImageViewDialogBinding.inflate(
@@ -354,27 +308,30 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     MaterialDialog(this).apply {
                         listItems(
                             items = listOf(
-                                context.getString(R.string.menu_edit),
+                                context.getString(R.string.menu_position_change),
                                 context.getString(R.string.menu_delete)
                             ),
                             selection = { dialog, index, text ->
                                 when (index) {
-                                    // 編集
+                                    // 位置変更
                                     0 -> {
                                         //
                                     }
                                     // 削除
                                     1 -> {
                                         if (mode == Mode.CACHE) {
+                                            // キャッシュ画像削除
                                             val imageData = it.tag as ImageData
                                             helper.deleteCacheImage(imageData, images)
                                         } else {
-                                            val data = it.tag as EvImageData
+                                            // Evernote画像削除
+                                            val tag = it.tag as EvImageData
                                             CoroutineScope(Dispatchers.IO).launch {
-                                                helper.deleteEvResouce(data.noteGuid, data.guid)
+                                                helper.deleteEvResouce(tag.noteGuid, tag.guid)
                                             }
+                                            mEvResource.clear()
                                         }
-                                        mEvResource.clear()
+                                        // マーカー削除
                                         imageMarkers.remove(it)
                                         it.hideInfoWindow()
                                         it.remove()
@@ -388,6 +345,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
             // マーカークリック時
             this.setOnMarkerClickListener {
+                // showInfoWindow
                 var imageData = it.tag as ImageData
                 imageData?.apply{
                     it.title = imageData.address
@@ -399,7 +357,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-
+    /**
+     * 初期表示設定
+     */
     private fun initData() {
         imageMarkers.forEach { it.remove() }
         imageMarkers.clear()
@@ -426,6 +386,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     }
 
+    /**
+     * 写真撮影インテント
+     */
     private fun dispatchTakePictureIntent() {
         Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
             activity?.apply{
@@ -456,11 +419,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-
-
-
     /**
-     * 初期表示時Evernoteから画像を取得し、マーカーを作成する
+     * 初期表示時に呼び出され、Evernoteから画像を取得し、マーカーを作成する
      * ※FindNotesTask後にcallback
      */
     @TaskResult(id = "onInitFindNotes")
@@ -470,10 +430,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         CoroutineScope(IO).launch {
 
             noteRefList?.forEach {
-
+                // ノート取得
                 val note = it.loadNote(true, true, false, false)
                 val resources = note.resources
-                
+
                 mEvNotebook.notes.add(note)
 
                 withContext(Dispatchers.Main){
@@ -571,7 +531,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         // 再度ノート検索タスク実行
                         FindNotesTask(0, 250, evNotebook, null, null).start(
                             this@MapFragment,
-                            "onAfterCreateNote"
+                            "onCreatedFindNote"
                         )
                     }
                 }
@@ -579,11 +539,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     }
 
-    @TaskResult(id = "onAfterCreateNote")
-    fun onAfterCreateNote(noteRefList: List<NoteRef>?) {
+    /**
+     * ノート新規作成後にコールバックされる
+     */
+    @TaskResult(id = "onCreatedFindNote")
+    fun onCreatedFindNote(noteRefList: List<NoteRef>?) {
 
         CoroutineScope(IO).launch {
 
+            // 対象のノートを抽出する
             var targetRef: NoteRef? = noteRefList?.filter{it.title.extractPostalCode() == mEvResource.title.extractPostalCode()}?.firstOrNull()
             targetRef?.apply {
                 val note = this.loadNote(true, true, false, false)
@@ -601,7 +565,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     /**
-     * CreateNewNoteTask実行後、呼び出し
+     * CreateNewNoteTask実行後、コールバック
      * resource.body = nullでエラー。使えず。
      * EDAMUserException(errorCode:ENML_VALIDATION, parameter:The processing instruction target matching "[xX][mM][lL]" is not allowed.
      *
@@ -620,6 +584,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    /**
+     * フラグメントの再描画
+     */
     private fun refresh() {
         fragmentManager?.apply{
             val trans = this.beginTransaction()
@@ -643,7 +610,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
 
         /**
-         * Evernoteノート情報
+         * Evernoteノート情報関連クラス
          */
         class EvResource {
             var title: String = ""

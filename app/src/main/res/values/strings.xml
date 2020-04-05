@@ -12,7 +12,7 @@
     <string name="notebook_label">ノートブック</string>
     <string name="none">なし</string>
     <string name="save_button">登録</string>
-    <string name="mode_cache">アプリ内キャッシュ</string>
+    <string name="mode_cache">アプリ内ストレージ</string>
     <string name="mode_evernote">Evernote</string>
     <string name="evernote_label">Evernote連携ユーザ</string>
     <string name="alert_create_notebook">ノートブック名が存在しません。「%1$s」を新しく作成しますか？</string>
@@ -23,7 +23,7 @@
     <!-- map -->
     <string name="current_point">この位置に登録します</string>
     <string name="menu_delete">削除</string>
-    <string name="menu_edit">編集</string>
+    <string name="menu_position_change">位置変更</string>
 
 </resources>
 
