@@ -14,6 +14,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.list.listItems
 import com.evernote.client.android.type.NoteRef
@@ -31,6 +33,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.snackbar.Snackbar
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.mode
@@ -42,7 +45,9 @@ import com.komugirice.mapapp.extension.makeTempFileToStorage
 import com.komugirice.mapapp.task.CreateNewNoteTask
 import com.komugirice.mapapp.task.FindNotesTask
 import com.squareup.picasso.Picasso
+import kotlinx.android.synthetic.main.fragment_map.*
 import kotlinx.android.synthetic.main.fragment_map.view.*
+import kotlinx.android.synthetic.main.fragment_preference.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -100,6 +105,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var currentPhotoPath: String
     private lateinit var currentPhotoUri: Uri
 
+    private var isPosChangeMode = MutableLiveData<Boolean>(false)
+    private var posChangeMarker: Marker? = null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -108,18 +116,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         val root = inflater.inflate(R.layout.fragment_map,container, false)
 
-        // 写真ボタンクリック時
-        root.photoButton.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-                .addCategory(Intent.CATEGORY_OPENABLE)
-                .setType("image/jpeg")
-            startActivityForResult(intent, REQUEST_CODE_CHOOSE_IMAGE)
-        }
-
-        // カメラボタンクリック時
-        root.cameraButton.setOnClickListener {
-            dispatchTakePictureIntent()
-        }
+        isPosChangeMode.observe(this, Observer {
+            if(it) {
+                isPosChangeModeGroup.visibility = View.VISIBLE
+                buttonGroup.visibility = View.GONE
+            } else {
+                isPosChangeModeGroup.visibility = View.GONE
+                buttonGroup.visibility = View.VISIBLE
+            }
+        })
 
         return root
 
@@ -134,12 +139,146 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             getMapAsync(this@MapFragment)
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(context!!)
         }
+        initClick()
     }
 
     override fun onResume() {
         super.onResume()
 //        if(::mMap.isInitialized)
 //            initData()
+    }
+
+    private fun initClick() {
+
+        // 写真ボタンクリック時
+        photoButton.setOnClickListener {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("image/jpeg")
+            startActivityForResult(intent, REQUEST_CODE_CHOOSE_IMAGE)
+        }
+
+        // カメラボタンクリック時
+        cameraButton.setOnClickListener {
+            dispatchTakePictureIntent()
+        }
+
+        // 位置変更OK
+        posOkButton.setOnClickListener {
+            isPosChangeMode.value = false
+
+            var target = posChangeMarker?.tag as ImageData
+            var tap = tapMarker?.tag as ImageData
+
+            if(target == null || tap == null) return@setOnClickListener
+
+            val tapLatLng = LatLng(tap.lat, tap.lon)
+
+            target.apply{
+                lat = tap.lat
+                lon = tap.lon
+                address = tap.address
+            }
+
+            // posChangeMarkerはimageMarkersの値をシャローコピーしているか？
+            posChangeMarker?.apply{
+                tag = target
+                this.position = tapLatLng
+                showInfoWindow()
+//                imageMarkers.remove(this)
+//                imageMarkers.add(this)
+            }
+
+
+            // 保存
+            if (mode == Mode.CACHE) {
+
+                images.filter{it.id == target.id}.firstOrNull()?.apply{
+                    images.remove(this)
+                    images.add(target)
+                }
+                Prefs().allImage.put(AllImage().apply { allImage = images })
+            } else {
+                evNotebook?.apply {
+                    val evImage = posChangeMarker?.tag as EvImageData
+                    // 変更前ノート
+                    currentEvNotebook.notes.filter{it.guid == evImage.noteGuid}.firstOrNull()?.also {
+
+                        it?.resources?.filter{it.guid == evImage.guid}?.firstOrNull()?.apply {
+                            this.attributes.latitude = evImage.lat
+                            this.attributes.longitude = evImage.lon
+
+                            currentEvResource.clear()
+                            currentEvResource.resource = this
+                            currentEvResource.filePath = evImage.filePath
+                            currentEvResource.title = evImage.address
+
+                            // 変更前ノートのリソース削除でノート登録
+                            it?.resources?.remove(this)
+                            CoroutineScope(IO).launch {
+                                async {
+                                    try {
+                                        helper.updateNoteEvResource(it, null)
+                                    } catch (e: EDAMUserException) {
+                                        withContext(Main) {
+                                            Timber.e(e)
+                                            if (e.errorCode == EDAMErrorCode.QUOTA_REACHED)
+                                                Toast.makeText(
+                                                    context,
+                                                    "Evernoteアカウントのアップロード容量上限に達しました",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                        }
+                                        cancel()
+                                    }
+                                }.await()
+
+
+                            }
+                        }
+                    }
+                    // 変更後ノート
+
+                            // 変更後ノート
+                            CoroutineScope(IO).launch {
+                                async {
+                                    try {
+                                        // 郵便番号が同じノートが存在する場合は更新
+                                        currentEvNotebook.notes.filter{it.title.extractPostalCode() == evImage.address.extractPostalCode()}.firstOrNull()?.apply {
+                                            helper.updateNoteEvResource(this, currentEvResource.resource)
+                                        } ?: run {
+                                            // 存在しない場合は新規作成
+                                            helper.createNote(evNotebook?.guid, currentEvResource)
+                                        }
+                                    } catch (e: EDAMUserException) {
+                                        withContext(Main) {
+                                            Timber.e(e)
+                                            if (e.errorCode == EDAMErrorCode.QUOTA_REACHED)
+                                                Toast.makeText(
+                                                    context,
+                                                    "Evernoteアカウントのアップロード容量上限に達しました",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                        }
+                                        cancel()
+                                    }
+                                }.await()
+                        }
+
+                } ?: run {
+                    // ノートブック存在エラー
+                    Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG)
+                        .show()
+                }
+            }
+
+
+        }
+        // 位置変更Cancel
+        posCancelButton.setOnClickListener {
+            isPosChangeMode.value = false
+        }
+
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -189,7 +328,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     evNotebook?.apply {
                         // ノート情報設定
                         currentEvResource =
-                            helper.createEvResource(imageFile, it, latLng, address)
+                            helper.createEvResource(imageFile, latLng, address)
                         // ノート検索タスク実行
                         FindNotesTask(
                             0,
@@ -335,7 +474,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                 when (index) {
                                     // 位置変更
                                     0 -> {
-                                        //
+                                        posChangeMarker = it
+                                        isPosChangeMode.value = true
                                     }
                                     // 削除
                                     1 -> {
@@ -418,7 +558,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     val photoFile: File? = try {
                         helper.createImageFileToCache()
 
-                    } catch (ex: IOException) {
+                    } catch (ex: Throwable) {
                         // Error occurred while creating the File
                         null
                     }
@@ -492,7 +632,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         currentEvResource.resource.noteGuid = note.guid
 
                         try {
-                            helper.updateNoteEvResource(note, currentEvResource)
+                            helper.updateNoteEvResource(note, currentEvResource.resource)
                             currentEvNotebook.notes.filter { it.guid == note.guid }.first().resources.add(
                                 currentEvResource.resource
                             )

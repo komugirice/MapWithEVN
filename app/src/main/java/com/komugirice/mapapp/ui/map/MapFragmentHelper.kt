@@ -58,7 +58,7 @@ object MapFragmentHelper {
     /**
      * Evernoteノート情報作成
      */
-    fun createEvResource(imageFile: File, uri: Uri, latLng: LatLng, title: String): MapFragment.Companion.EvResource {
+    fun createEvResource(imageFile: File, latLng: LatLng, title: String): MapFragment.Companion.EvResource {
         // Hash the data in the image file. The hash is used to reference the file in the ENML note content.
         var `in` = BufferedInputStream(FileInputStream(imageFile))
         val data = FileData(EvernoteUtil.hash(`in`), imageFile)
@@ -96,12 +96,19 @@ object MapFragmentHelper {
     /**
      * Evernoteノート更新
      */
-    fun updateNoteEvResource(note: Note, evResource: MapFragment.Companion.EvResource){
-        note.addToResources(evResource.resource)
+    fun updateNoteEvResource(note: Note, resource: Resource?){
 
-        note.content = note.content.removeSuffix(EvernoteUtil.NOTE_SUFFIX) +
-                EvernoteUtil.createEnMediaTag(evResource.resource) +
-                EvernoteUtil.NOTE_SUFFIX;
+        note.content = EvernoteUtil.NOTE_PREFIX
+        note.resources.forEach {
+            note.content += EvernoteUtil.createEnMediaTag(it)
+        }
+        resource?.apply {
+            note.addToResources(resource)
+            note.content += EvernoteUtil.createEnMediaTag(resource)
+
+        }
+        note.content += EvernoteUtil.NOTE_SUFFIX
+
 
         noteStoreClient?.updateNote(note)
     }
