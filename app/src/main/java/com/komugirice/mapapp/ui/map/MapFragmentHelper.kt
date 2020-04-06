@@ -99,7 +99,7 @@ object MapFragmentHelper {
     fun updateNoteEvResource(note: Note, resource: Resource?){
 
         note.content = EvernoteUtil.NOTE_PREFIX
-        note.resources.forEach {
+        note.resources?.forEach {
             note.content += EvernoteUtil.createEnMediaTag(it)
         }
         resource?.apply {
@@ -146,7 +146,7 @@ object MapFragmentHelper {
     /**
      * Evernoteノート新規登録
      */
-    fun createNote(notebookGuid: String?, evResource: MapFragment.Companion.EvResource): Note{
+    fun createNote(notebookGuid: String?, evResource: MapFragment.Companion.EvResource){
         val note = Note()
         note.title = evResource.title
         note.content =
@@ -158,7 +158,7 @@ object MapFragmentHelper {
         notebookGuid?.apply {
             note.notebookGuid = this
         }
-        return note
+        noteStoreClient?.createNote(note)
     }
 
     /**
@@ -257,9 +257,9 @@ object MapFragmentHelper {
 
 
     }
-    fun deleteEvResouce(noteGuid: String, resourceGuid: String) {
+    fun deleteEvResouce(noteGuid: String, resourceGuid: String): Note? {
         var note = MyApplication.noteStoreClient?.getNote(noteGuid, true, true, true, false)
-        if(note == null) return
+        if(note == null) return null
 
         var targetResource = note?.resources?.filter{it.guid == resourceGuid}?.first()
         note.resources.remove(targetResource)
@@ -277,6 +277,7 @@ object MapFragmentHelper {
         } else {
             noteStoreClient?.deleteNote(note.guid)
         }
+        return note
     }
 
 }
