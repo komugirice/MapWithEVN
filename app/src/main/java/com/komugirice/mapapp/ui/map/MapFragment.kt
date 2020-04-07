@@ -80,7 +80,7 @@ import java.io.IOException
  * onCreatedFindNote
  * onCreateNewNote
  * refresh
- *
+ * handleEvernoteApiException
  *
  */
 class MapFragment : Fragment(), OnMapReadyCallback {
@@ -113,7 +113,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private var posChangeMarker: Marker? = null
 
     private val exceptionHandler: CoroutineExceptionHandler
-            = CoroutineExceptionHandler { _, throwable -> evernoteApiException(throwable)}
+            = CoroutineExceptionHandler { _, throwable -> handleEvernoteApiException(throwable)}
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -757,7 +757,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     // エラーハンドリングを作成
-    private fun evernoteApiException(throwable: Throwable) {
+    private fun handleEvernoteApiException(throwable: Throwable) {
         Log.e("CoroutineException", "例外キャッチ $throwable")
         CoroutineScope(Main).launch {
             var errorMsg = ""
