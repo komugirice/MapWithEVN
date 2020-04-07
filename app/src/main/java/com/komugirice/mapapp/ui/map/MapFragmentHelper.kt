@@ -94,26 +94,6 @@ object MapFragmentHelper {
     }
 
     /**
-     * Evernoteノート更新
-     */
-    fun updateNoteEvResource(note: Note, resource: Resource?){
-
-        note.content = EvernoteUtil.NOTE_PREFIX
-        note.resources?.forEach {
-            note.content += EvernoteUtil.createEnMediaTag(it)
-        }
-        resource?.apply {
-            note.addToResources(resource)
-            note.content += EvernoteUtil.createEnMediaTag(resource)
-
-        }
-        note.content += EvernoteUtil.NOTE_SUFFIX
-
-
-        noteStoreClient?.updateNote(note)
-    }
-
-    /**
      * ExternalStorageに画像ファイル作成
      */
     @Throws(IOException::class)
@@ -144,6 +124,27 @@ object MapFragmentHelper {
     }
 
     /**
+     * Evernoteノート更新
+     * ※同じ画像はresoucesに追加されないらしい
+     */
+    fun updateNoteEvResource(note: Note, resource: Resource?){
+
+        note.content = EvernoteUtil.NOTE_PREFIX
+        note.resources?.forEach {
+            note.content += EvernoteUtil.createEnMediaTag(it)
+        }
+        resource?.apply {
+            note.addToResources(resource)
+            note.content += EvernoteUtil.createEnMediaTag(resource)
+
+        }
+        note.content += EvernoteUtil.NOTE_SUFFIX
+
+
+        noteStoreClient?.updateNote(note)
+    }
+
+    /**
      * Evernoteノート新規登録
      */
     fun createNote(notebookGuid: String?, evResource: MapFragment.Companion.EvResource){
@@ -151,8 +152,9 @@ object MapFragmentHelper {
         note.title = evResource.title
         note.content =
             EvernoteUtil.NOTE_PREFIX +
-                    "<en-media type=\"" + evResource.resource.mime + "\" hash=\"" +
-                    EvernoteUtil.bytesToHex(evResource.resource.getData().getBodyHash()) + "\"/>" +
+//                    "<en-media type=\"" + evResource.resource.mime + "\" hash=\"" +
+//                    EvernoteUtil.bytesToHex(evResource.resource.getData().getBodyHash()) + "\"/>" +
+                    EvernoteUtil.createEnMediaTag(evResource.resource) +
                     EvernoteUtil.NOTE_SUFFIX;
         note.addToResources(evResource.resource)
         notebookGuid?.apply {
@@ -257,9 +259,9 @@ object MapFragmentHelper {
 
 
     }
-    fun deleteEvResouce(noteGuid: String, resourceGuid: String): Note? {
-        var note = MyApplication.noteStoreClient?.getNote(noteGuid, true, true, true, false)
-        if(note == null) return null
+    fun deleteEvResouce(note: Note, resourceGuid: String): Note? {
+        //var note = MyApplication.noteStoreClient?.getNote(noteGuid, true, true, true, false)
+        //if(note == null) return null
 
         var targetResource = note?.resources?.filter{it.guid == resourceGuid}?.first()
         note.resources.remove(targetResource)

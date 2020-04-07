@@ -38,6 +38,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.mode
+import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
 import com.komugirice.mapapp.databinding.ImageViewDialogBinding
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode
@@ -65,6 +66,8 @@ import java.io.IOException
  * onCreateView
  * onActivityCreated
  * onResume
+ * initClick
+ * changePosition
  * onActivityResult
  * focusPosition
  * onMapReady
@@ -166,96 +169,74 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         // 位置変更OK
         posOkButton.setOnClickListener {
+            changePosition()
+        }
+        // 位置変更Cancel
+        posCancelButton.setOnClickListener {
             isPosChangeMode.value = false
+        }
 
-            var targetTag = posChangeMarker?.tag as ImageData
-            var tap = tapMarker?.tag as ImageData
+    }
 
-            if(targetTag == null || tap == null) return@setOnClickListener
+    private fun changePosition() {
+        isPosChangeMode.value = false
 
-            val tapLatLng = LatLng(tap.lat, tap.lon)
+        var targetTag = posChangeMarker?.tag as ImageData
+        var tap = tapMarker?.tag as ImageData
 
-            targetTag.apply{
-                lat = tap.lat
-                lon = tap.lon
-                address = tap.address
+        if(targetTag == null || tap == null) return
+
+        val tapLatLng = LatLng(tap.lat, tap.lon)
+
+        targetTag.apply{
+            lat = tap.lat
+            lon = tap.lon
+            address = tap.address
+        }
+
+        // マーカーを変更先情報に更新(imageMarkersも同時に更新される)
+        posChangeMarker?.apply {
+            tag = targetTag
+            this.position = tapLatLng
+        }
+
+        // 保存
+        if (mode == Mode.CACHE) {
+
+            images.filter{it.id == targetTag.id}.firstOrNull()?.apply{
+                images.remove(this)
+                images.add(targetTag)
             }
+            Prefs().allImage.put(AllImage().apply { allImage = images })
+            posChangeMarker?.showInfoWindow()
+        } else {
+            evNotebook?.apply {
+                val evImage = posChangeMarker?.tag as EvImageData
+                // 変更前ノート
+                currentEvNotebook.notes.filter{it.guid == evImage.noteGuid}.firstOrNull()?.also {
 
-            // マーカーを変更先情報に更新(imageMarkersも同時に更新される)
-            posChangeMarker?.apply {
-                tag = targetTag
-                this.position = tapLatLng
-            }
+                    it?.resources?.filter{it.guid == evImage.guid}?.firstOrNull()?.apply {
+                        this.attributes.latitude = evImage.lat
+                        this.attributes.longitude = evImage.lon
 
-            // 保存
-            if (mode == Mode.CACHE) {
+                        // 変更前データに位置情報を更新したものを保持
+                        currentEvResource.clear()
+                        currentEvResource.resource = this
+                        currentEvResource.filePath = evImage.filePath
+                        currentEvResource.title = evImage.address
 
-                images.filter{it.id == targetTag.id}.firstOrNull()?.apply{
-                    images.remove(this)
-                    images.add(targetTag)
-                }
-                Prefs().allImage.put(AllImage().apply { allImage = images })
-                posChangeMarker?.showInfoWindow()
-            } else {
-                evNotebook?.apply {
-                    val evImage = posChangeMarker?.tag as EvImageData
-                    // 変更前ノート
-                    currentEvNotebook.notes.filter{it.guid == evImage.noteGuid}.firstOrNull()?.also {
-
-                        it?.resources?.filter{it.guid == evImage.guid}?.firstOrNull()?.apply {
-                            this.attributes.latitude = evImage.lat
-                            this.attributes.longitude = evImage.lon
-
-                            // 変更前データに位置情報を更新したものを保持
-                            currentEvResource.clear()
-                            currentEvResource.resource = this
-                            currentEvResource.filePath = evImage.filePath
-                            currentEvResource.title = evImage.address
-
-                            // 変更前ノートのリソース削除でノート登録
-                            CoroutineScope(IO).launch {
-                                async {
-                                    try {
-                                        // 削除
-                                        val retNote = helper.deleteEvResouce(evImage.noteGuid, evImage.guid)
-                                        retNote?.apply {
-                                            // リソース残る＆残らない
-                                            currentEvNotebook.notes.remove(it)
-                                            // リソース残る
-                                            if(retNote.resources.isNotEmpty())
-                                                currentEvNotebook.notes.add(retNote)
-                                        }
-                                    } catch (e: EDAMUserException) {
-                                        withContext(Main) {
-                                            Timber.e(e)
-                                            if (e.errorCode == EDAMErrorCode.QUOTA_REACHED)
-                                                Toast.makeText(
-                                                    context,
-                                                    "Evernoteアカウントのアップロード容量上限に達しました",
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                        }
-                                        cancel()
-                                    }
-                                }.await()
-                            }
-                        }
-                    }
-                    // 変更後ノート
-
-                        // 変更後ノート
+                        // 変更前ノートのリソース削除でノート登録
                         CoroutineScope(IO).launch {
-                            var isCreate = false
                             async {
                                 try {
-                                    // 郵便番号が同じノートが存在する場合は更新
-                                    currentEvNotebook.notes.filter{it.title.extractPostalCode() == evImage.address.extractPostalCode()}.firstOrNull()?.apply {
-                                        helper.updateNoteEvResource(this, currentEvResource.resource)
-                                        posChangeMarker?.showInfoWindow()
-                                    } ?: run {
-                                        // 存在しない場合は新規作成
-                                        isCreate = true
-                                        helper.createNote(evNotebook?.guid, currentEvResource)
+                                    // 削除
+                                    val retNote = helper.deleteEvResouce(it, evImage.guid)
+                                    retNote?.apply {
+                                        // リソース残る＆残らない
+                                        currentEvNotebook.notes.remove(it)
+                                        // リソース残る
+                                        if(retNote.resources.isNotEmpty())
+                                            currentEvNotebook.notes.add(retNote)
                                     }
                                 } catch (e: EDAMUserException) {
                                     withContext(Main) {
@@ -270,36 +251,63 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                     cancel()
                                 }
                             }.await()
-                            // マーカー作成
-                            if(isCreate)
-                                withContext(Main) {
-                                    // ノート新規登録の場合は一度マーカー削除
-                                    posChangeMarker?.apply {
-                                        imageMarkers.remove(this)
-                                    }
-                                    // のちonCreateFindNoteでマーカー再設定（currentNotebookも)
-                                    // 再度ノート検索タスク実行
-                                    FindNotesTask(0, 250, evNotebook, null, null).start(
-                                        this@MapFragment,
-                                        "onCreatedFindNote"
-                                    )
-                                }
                         }
-
-                } ?: run {
-                    // ノートブック存在エラー
-                    Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG)
-                        .show()
+                    }
                 }
+                // 変更後ノート
+
+                // 変更後ノート
+                CoroutineScope(IO).launch {
+                    var isCreate = false
+                    async {
+                        try {
+                            // 郵便番号が同じノートが存在する場合は更新
+                            currentEvNotebook.notes.filter{it.title.extractPostalCode() == evImage.address.extractPostalCode()}.firstOrNull()?.apply {
+                                helper.updateNoteEvResource(this, currentEvResource.resource)
+                            } ?: run {
+                                // 存在しない場合は新規作成
+                                isCreate = true
+                                helper.createNote(evNotebook?.guid, currentEvResource)
+                            }
+                        } catch (e: EDAMUserException) {
+                            withContext(Main) {
+                                Timber.e(e)
+                                if (e.errorCode == EDAMErrorCode.QUOTA_REACHED)
+                                    Toast.makeText(
+                                        context,
+                                        "Evernoteアカウントのアップロード容量上限に達しました",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                            }
+                            cancel()
+                        }
+                    }.await()
+                    // マーカー作成
+                    withContext(Main) {
+                        if(isCreate) {
+                            // ノート新規登録の場合は一度マーカー削除
+                            posChangeMarker?.apply {
+                                imageMarkers.remove(this)
+                            }
+                            // のちonCreateFindNoteでマーカー再設定（currentNotebookも)
+                            // 再度ノート検索タスク実行
+                            FindNotesTask(0, 250, evNotebook, null, null).start(
+                                this@MapFragment,
+                                "onCreatedFindNote"
+                            )
+                        } else {
+                            // 更新の場合
+                            posChangeMarker?.showInfoWindow()
+                        }
+                    }
+                }
+
+            } ?: run {
+                // ノートブック存在エラー
+                Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG)
+                    .show()
             }
-
-
         }
-        // 位置変更Cancel
-        posCancelButton.setOnClickListener {
-            isPosChangeMode.value = false
-        }
-
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -508,24 +516,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                             val imageData = it.tag as ImageData
                                             helper.deleteCacheImage(imageData, images)
                                         } else {
-                                            // Evernote画像削除
-                                            val tag = it.tag as EvImageData
-                                            CoroutineScope(Dispatchers.IO).launch {
-                                                val retNote = helper.deleteEvResouce(tag.noteGuid, tag.guid)
-                                                retNote?.apply {
-                                                    currentEvNotebook.notes.also{
-                                                        it.filter{it.guid == this.guid}.first().apply {
-                                                            // リソース残る＆残らない
-                                                            it.remove(this)
-                                                        }
-                                                        // リソース残る
-                                                        if(retNote.resources.isNotEmpty())
-                                                            it.add(retNote)
-                                                    }
-                                                }
-
-                                            }
-                                            currentEvResource.clear()
+                                            deleteEvImage(it)
                                         }
                                         // マーカー削除
                                         imageMarkers.remove(it)
@@ -551,6 +542,28 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
 
         }
+    }
+
+    private fun deleteEvImage(marker: Marker) {
+        // Evernote画像削除
+        val tag = marker.tag as EvImageData
+        CoroutineScope(Dispatchers.IO).launch {
+            val targetNote = currentEvNotebook.notes.filter{it.guid == tag.noteGuid}.first()
+            val retNote = helper.deleteEvResouce(targetNote, tag.guid)
+            retNote?.apply {
+                currentEvNotebook.notes.also{
+                    it.filter{it.guid == this.guid}.first().apply {
+                        // リソース残る＆残らない
+                        it.remove(this)
+                    }
+                    // リソース残る
+                    if(retNote.resources.isNotEmpty())
+                        it.add(retNote)
+                }
+            }
+
+        }
+        currentEvResource.clear()
     }
 
     /**
