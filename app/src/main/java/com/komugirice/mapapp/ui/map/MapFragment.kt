@@ -764,11 +764,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             var message = throwable.message ?: ""
 
             if(throwable is EDAMUserException){
-                if(throwable.errorCode == EDAMErrorCode.QUOTA_REACHED)
+                if(throwable.errorCode == EDAMErrorCode.QUOTA_REACHED) {
                     errorMsg = "Evernoteアカウントのアップロード容量の上限に達しました"
-            } else {
-                errorMsg = "API実行中に予期せぬエラーが発生しました"
+                }
             }
+            if(errorMsg.isEmpty())
+                errorMsg = "API実行中に予期せぬエラーが発生しました\n${throwable}"
+
 
             Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
         }
