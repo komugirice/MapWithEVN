@@ -112,6 +112,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private var isPosChangeMode = MutableLiveData<Boolean>(false)
     private var posChangeMarker: Marker? = null
 
+    private val exceptionHandler: CoroutineExceptionHandler
+            = CoroutineExceptionHandler { _, throwable -> evernoteApiException(throwable)}
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -226,29 +229,16 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         currentEvResource.title = evImage.address
 
                         // 変更前ノートのリソース削除でノート登録
-                        CoroutineScope(IO).launch {
+                        CoroutineScope(IO).launch(exceptionHandler) {
                             async {
-                                try {
-                                    // 削除
-                                    val retNote = helper.deleteEvResouce(it, evImage.guid)
-                                    retNote?.apply {
-                                        // リソース残る＆残らない
-                                        currentEvNotebook.notes.remove(it)
-                                        // リソース残る
-                                        if(retNote.resources.isNotEmpty())
-                                            currentEvNotebook.notes.add(retNote)
-                                    }
-                                } catch (e: EDAMUserException) {
-                                    withContext(Main) {
-                                        Timber.e(e)
-                                        if (e.errorCode == EDAMErrorCode.QUOTA_REACHED)
-                                            Toast.makeText(
-                                                context,
-                                                "Evernoteアカウントのアップロード容量上限に達しました",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                    }
-                                    cancel()
+                                // 削除
+                                val retNote = helper.deleteEvResouce(it, evImage.guid)
+                                retNote?.apply {
+                                    // リソース残る＆残らない
+                                    currentEvNotebook.notes.remove(it)
+                                    // リソース残る
+                                    if(retNote.resources.isNotEmpty())
+                                        currentEvNotebook.notes.add(retNote)
                                 }
                             }.await()
                         }
@@ -257,29 +247,16 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 // 変更後ノート
 
                 // 変更後ノート
-                CoroutineScope(IO).launch {
+                CoroutineScope(IO).launch(exceptionHandler) {
                     var isCreate = false
                     async {
-                        try {
-                            // 郵便番号が同じノートが存在する場合は更新
-                            currentEvNotebook.notes.filter{it.title.extractPostalCode() == evImage.address.extractPostalCode()}.firstOrNull()?.apply {
-                                helper.updateNoteEvResource(this, currentEvResource.resource)
-                            } ?: run {
-                                // 存在しない場合は新規作成
-                                isCreate = true
-                                helper.createNote(evNotebook?.guid, currentEvResource)
-                            }
-                        } catch (e: EDAMUserException) {
-                            withContext(Main) {
-                                Timber.e(e)
-                                if (e.errorCode == EDAMErrorCode.QUOTA_REACHED)
-                                    Toast.makeText(
-                                        context,
-                                        "Evernoteアカウントのアップロード容量上限に達しました",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                            }
-                            cancel()
+                        // 郵便番号が同じノートが存在する場合は更新
+                        currentEvNotebook.notes.filter{it.title.extractPostalCode() == evImage.address.extractPostalCode()}.firstOrNull()?.apply {
+                            helper.updateNoteEvResource(this, currentEvResource.resource)
+                        } ?: run {
+                            // 存在しない場合は新規作成
+                            isCreate = true
+                            helper.createNote(evNotebook?.guid, currentEvResource)
                         }
                     }.await()
                     // マーカー作成
@@ -547,7 +524,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private fun deleteEvImage(marker: Marker) {
         // Evernote画像削除
         val tag = marker.tag as EvImageData
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.IO).launch(exceptionHandler) {
             val targetNote = currentEvNotebook.notes.filter{it.guid == tag.noteGuid}.first()
             val retNote = helper.deleteEvResouce(targetNote, tag.guid)
             retNote?.apply {
@@ -636,7 +613,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     fun onInitFindNotes(noteRefList: List<NoteRef>?) {
         currentEvNotebook.notes.clear()
 
-        CoroutineScope(IO).launch {
+        CoroutineScope(IO).launch(exceptionHandler) {
 
             noteRefList?.forEach {
                 // ノート取得
@@ -675,28 +652,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             targetRef?.apply {
 
                 // ノートあり　更新
-                CoroutineScope(IO).launch {
+                CoroutineScope(IO).launch(exceptionHandler) {
                     async {
                         val note = this@apply.loadNote(true, true, false, false)
                         currentEvResource.resource.noteGuid = note.guid
 
-                        try {
-                            helper.updateNoteEvResource(note, currentEvResource.resource)
-                            currentEvNotebook.notes.filter { it.guid == note.guid }.first().resources.add(
-                                currentEvResource.resource
-                            )
-                        }catch(e: EDAMUserException) {
-                            withContext(Main) {
-                                Timber.e(e)
-                                if(e.errorCode == EDAMErrorCode.QUOTA_REACHED)
-                                    Toast.makeText(
-                                        context,
-                                        "Evernoteアカウントのアップロード容量上限に達しました",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                            }
-                            cancel()
-                        }
+                        helper.updateNoteEvResource(note, currentEvResource.resource)
+                        currentEvNotebook.notes.filter { it.guid == note.guid }.first().resources.add(
+                            currentEvResource.resource
+                        )
                     }.await()
 
                     withContext(Main) {
@@ -717,22 +681,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 //CreateNewNoteTask(note.title, note.content, null, evNotebook, null).start(this@MapFragment, "onCreateNewNote")
 
                 // 上記の代替処理
-                CoroutineScope(IO).launch {
+                CoroutineScope(IO).launch(exceptionHandler) {
                     async {
-                        try {
-                            helper.createNote(MyApplication.evNotebook?.guid, currentEvResource)
-                        }catch(e: EDAMUserException) {
-                            withContext(Main) {
-                                Timber.e(e)
-                                if(e.errorCode == EDAMErrorCode.QUOTA_REACHED)
-                                    Toast.makeText(
-                                        context,
-                                        "Evernoteアカウントのアップロード容量上限に達しました",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                            }
-                            cancel()
-                        }
+                        helper.createNote(MyApplication.evNotebook?.guid, currentEvResource)
                     }.await()
 
                     withContext(Main) {
@@ -753,7 +704,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     @TaskResult(id = "onCreatedFindNote")
     fun onCreatedFindNote(noteRefList: List<NoteRef>?) {
 
-        CoroutineScope(IO).launch {
+        CoroutineScope(IO).launch(exceptionHandler) {
 
             // 対象のノートを抽出する
             var targetRef: NoteRef? = noteRefList?.filter{it.title.extractPostalCode() == currentEvResource.title.extractPostalCode()}?.firstOrNull()
@@ -802,6 +753,24 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             trans.detach(this@MapFragment)
             trans.attach(this@MapFragment)
             trans.commit()
+        }
+    }
+
+    // エラーハンドリングを作成
+    private fun evernoteApiException(throwable: Throwable) {
+        Log.e("CoroutineException", "例外キャッチ $throwable")
+        CoroutineScope(Main).launch {
+            var errorMsg = ""
+            var message = throwable.message ?: ""
+
+            if(throwable is EDAMUserException){
+                if(throwable.errorCode == EDAMErrorCode.QUOTA_REACHED)
+                    errorMsg = "Evernoteアカウントのアップロード容量の上限に達しました"
+            } else {
+                errorMsg = "API実行中に予期せぬエラーが発生しました"
+            }
+
+            Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
         }
     }
 
