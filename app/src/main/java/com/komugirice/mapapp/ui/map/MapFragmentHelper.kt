@@ -145,16 +145,16 @@ object MapFragmentHelper {
     /**
      * Evernoteノート新規登録
      */
-    fun createNote(notebookGuid: String?, evResource: MapFragment.Companion.EvResource){
+    fun createNote(notebookGuid: String?, titile: String, resource: Resource){
         val note = Note()
-        note.title = evResource.title
+        note.title = titile
         note.content =
             EvernoteUtil.NOTE_PREFIX +
 //                    "<en-media type=\"" + evResource.resource.mime + "\" hash=\"" +
 //                    EvernoteUtil.bytesToHex(evResource.resource.getData().getBodyHash()) + "\"/>" +
-                    EvernoteUtil.createEnMediaTag(evResource.resource) +
+                    EvernoteUtil.createEnMediaTag(resource) +
                     EvernoteUtil.NOTE_SUFFIX;
-        note.addToResources(evResource.resource)
+        note.addToResources(resource)
         notebookGuid?.apply {
             note.notebookGuid = this
         }
@@ -257,13 +257,13 @@ object MapFragmentHelper {
 
 
     }
+
     fun deleteEvResouce(note: Note, resourceGuid: String): Note? {
-        //var note = MyApplication.noteStoreClient?.getNote(noteGuid, true, true, true, false)
-        //if(note == null) return null
 
         var targetResource = note?.resources?.filter{it.guid == resourceGuid}?.first()
         note.resources.remove(targetResource)
 
+        // リソースが残っている場合
         if(note.resources.isNotEmpty()) {
 
             note.content = note.content.removeSuffix(EvernoteUtil.NOTE_SUFFIX)
@@ -275,6 +275,7 @@ object MapFragmentHelper {
 
             noteStoreClient?.updateNote(note)
         } else {
+            // リソースが残っていない場合
             noteStoreClient?.deleteNote(note.guid)
         }
         return note

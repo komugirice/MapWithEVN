@@ -68,6 +68,7 @@ import java.io.IOException
  * onResume
  * initClick
  * changePosition
+ * createOrUpdateEvnoteWrap
  * onActivityResult
  * focusPosition
  * onMapReady
@@ -76,7 +77,6 @@ import java.io.IOException
  * initData
  * dispatchTakePictureIntent
  * onInitFindNotes
- * onFindNotesAndCreateOrUpdate
  * onCreatedFindNote
  * onCreateNewNote
  * refresh
@@ -197,7 +197,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             address = tap.address
         }
 
-        // マーカーを変更先情報に更新(imageMarkersも同時に更新される)
+        // マーカーを位置変更先情報に更新(imageMarkersも同時に更新される)
         posChangeMarker?.apply {
             tag = targetTag
             this.position = tapLatLng
@@ -213,72 +213,82 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             Prefs().allImage.put(AllImage().apply { allImage = images })
             posChangeMarker?.showInfoWindow()
         } else {
-            if(!isEvNotebookExist()) return
-
+            if(!isExistEvNotebook()) return
+            // マーカーの画像データ
             val evImage = posChangeMarker?.tag as EvImageData
-            // 変更前ノート
+
+            // クラス変数から位置変更前にいたノート抽出
             currentEvNotebook.notes.filter{it.guid == evImage.noteGuid}.firstOrNull()?.also {
 
+                // 変更前にいたノートの対象リソースの位置情報を更新
                 it?.resources?.filter{it.guid == evImage.guid}?.firstOrNull()?.apply {
                     this.attributes.latitude = evImage.lat
                     this.attributes.longitude = evImage.lon
 
-                    // 変更前データに位置情報を更新したものを保持
+                    // 変更前の対象リソースに位置情報を更新したものを保持
                     currentEvResource.clear()
                     currentEvResource.resource = this
                     currentEvResource.filePath = evImage.filePath
                     currentEvResource.title = evImage.address
 
-                    // 変更前ノートのリソース削除でノート登録
-                    CoroutineScope(IO).launch(exceptionHandler) {
-                        async {
-                            // 削除
-                            val retNote = helper.deleteEvResouce(it, evImage.guid)
-                            retNote?.apply {
-                                // リソース残る＆残らない
-                                currentEvNotebook.notes.remove(it)
-                                // リソース残る
-                                if(retNote.resources.isNotEmpty())
-                                    currentEvNotebook.notes.add(retNote)
-                            }
-                        }.await()
+                    // 変更前にいたノートからリソースを削除
+                    deleteEvResouceWrap(it, evImage.guid)
+
+                    // 一度（削除したリソースの）マーカー削除
+                    posChangeMarker?.apply {
+                        imageMarkers.remove(this)
                     }
+
                 }
             }
 
-            // 変更後ノート
-            CoroutineScope(IO).launch(exceptionHandler) {
-                var isCreate = false
-                async {
-                    // 郵便番号が同じノートが存在する場合は更新
-                    currentEvNotebook.notes.filter{it.title.extractPostalCode() == evImage.address.extractPostalCode()}.firstOrNull()?.apply {
-                        helper.updateNoteEvResource(this, currentEvResource.resource)
-                    } ?: run {
-                        // 存在しない場合は新規作成
-                        isCreate = true
-                        helper.createNote(evNotebook?.guid, currentEvResource)
-                    }
-                }.await()
-                // マーカー作成
-                withContext(Main) {
-                    if(isCreate) {
-                        // ノート新規登録の場合は一度マーカー削除
-                        posChangeMarker?.apply {
-                            imageMarkers.remove(this)
-                        }
-                        // のちonCreateFindNoteでマーカー再設定（currentNotebookも)
-                        // 再度ノート検索タスク実行
-                        FindNotesTask(0, 250, evNotebook, null, null).start(
-                            this@MapFragment,
-                            "onCreatedFindNote"
-                        )
-                    } else {
-                        // 更新の場合
-                        posChangeMarker?.showInfoWindow()
-                    }
+            // 位置変更先のノートを新規作成or更新
+            createOrUpdateEvnoteWrap(currentEvResource)
+
+        }
+    }
+
+    /**
+     * ノートを新規作成or更新
+     * [補足]
+     * 新規の場合
+     * 　currentNotebooks: onCreatedFindNoteで更新
+     * 　マーカー: onCreatedFindNoteで作成
+     * 　imageMarkers: onCreatedFindNoteで更新
+     * 更新の場合
+     * 　currentNotebooks: 自メソッド内で更新
+     * 　マーカー: 自メソッド内で作成
+     * 　imageMarkers: 自メソッド内で更新
+     */
+    private fun createOrUpdateEvnoteWrap(evResource: EvResource) {
+        CoroutineScope(IO).launch(exceptionHandler) {
+            var isCreate = false
+            async {
+                // 郵便番号が同じノートが存在する場合は更新
+                currentEvNotebook.notes.filter { it.title.extractPostalCode() == evResource.title.extractPostalCode() }.firstOrNull()?.apply {
+                    helper.updateNoteEvResource(this, evResource.resource)
+                } ?: run {
+                    // 存在しない場合は新規作成
+                    helper.createNote(evNotebook?.guid, evResource.title, evResource.resource)
+                    isCreate = true
+                }
+            }.await()
+            // マーカー作成
+            withContext(Main) {
+                if (isCreate) {
+                    // 再度ノート検索タスク実行
+                    // のちonCreateFindNoteでマーカー再設定（currentNotebookも)
+                    FindNotesTask(0, 250, evNotebook, null, null).start(
+                        this@MapFragment,
+                        "onCreatedFindNote"
+                    )
+                } else {
+                    // マーカー作成
+                    val imageMarker = helper.createMarker(evResource, mMap)
+                    imageMarker.showInfoWindow()
+                    imageMarkers.add(imageMarker)
                 }
             }
-
         }
     }
 
@@ -314,10 +324,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         filePath = "file://${imageFile.path}"
                         this.address = address
                     }
-
+                    // SharedPreference更新
                     images.add(imageData)
                     Prefs().allImage.put(AllImage().apply { allImage = images })
 
+                    // マーカー作成
                     val imageMarker = helper.createMarker(imageData, mMap)
                     imageMarker.showInfoWindow()
                     imageMarkers.add(imageMarker)
@@ -326,18 +337,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 // Evernote
                 var imageFile = it.makeTempFile()
                 if (imageFile != null) {
-                    if(!isEvNotebookExist()) return
-                        // ノート情報設定
-                        currentEvResource =
-                            helper.createEvResource(imageFile, latLng, address)
-                        // ノート検索タスク実行
-                        FindNotesTask(
-                            0,
-                            250,
-                            evNotebook,
-                            null,
-                            null
-                        ).start(this@MapFragment, "onFindNotesAndCreateOrUpdate")
+                    if(!isExistEvNotebook()) return
+
+                    // 設定情報からリソース作成
+                    currentEvResource = helper.createEvResource(imageFile, latLng, address)
+
+                    // ノートの新規登録or更新
+                    createOrUpdateEvnoteWrap(currentEvResource)
                 }
             }
             // TODO progress
@@ -390,6 +396,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    /**
+     * 位置情報用のマーカー作成
+     */
     private fun createTapMarker(latLng: LatLng) {
         tapLocation = LatLng(latLng.latitude, latLng.longitude).also {
             val locationStr = helper.getPostalCodeAndAllAddress(context, latLng)
@@ -460,12 +469,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             // InfoWindow長押し時
             this.setOnInfoWindowLongClickListener {
                 context?.apply {
+                    // ダイアログ設定
                     MaterialDialog(this).apply {
+                        // ダイアログのリスト設定
                         listItems(
                             items = listOf(
                                 context.getString(R.string.menu_position_change),
                                 context.getString(R.string.menu_delete)
                             ),
+                            // ダイアログのリストごとの処理
                             selection = { dialog, index, text ->
                                 when (index) {
                                     // 位置変更
@@ -483,7 +495,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                             val imageData = it.tag as ImageData
                                             helper.deleteCacheImage(imageData, images)
                                         } else {
-                                            deleteEvImage(it)
+                                            // Evernote画像削除
+                                            val tag = it.tag as EvImageData
+                                            val note = currentEvNotebook.notes.filter{it.guid == tag.noteGuid}.first()
+                                            deleteEvResouceWrap(note, tag.guid)
+                                            currentEvResource.clear()
                                         }
                                         // マーカー削除
                                         imageMarkers.remove(it)
@@ -499,7 +515,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
             // マーカークリック時
             this.setOnMarkerClickListener {
-                // showInfoWindow
+                // showInfoWindow表示
                 var imageData = it.tag as ImageData
                 imageData?.apply{
                     it.title = imageData.address
@@ -511,27 +527,34 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    private fun deleteEvImage(marker: Marker) {
-        // Evernote画像削除
-        val tag = marker.tag as EvImageData
+    /**
+     * 対象ノートから引数に設定されたリソースを削除し、クラス変数のcurrentEvNotebookを更新する
+     *
+     * 以下のクラス変数を更新する
+     * currentEvNotebook
+     *
+     */
+    private fun deleteEvResouceWrap(note: Note, resouceGuid: String) {
         CoroutineScope(Dispatchers.IO).launch(exceptionHandler) {
-            val targetNote = currentEvNotebook.notes.filter{it.guid == tag.noteGuid}.first()
-            val retNote = helper.deleteEvResouce(targetNote, tag.guid)
-            retNote?.apply {
-                currentEvNotebook.notes.also{
-                    it.filter{it.guid == this.guid}.first().apply {
-                        // リソース残る＆残らない
-                        it.remove(this)
+            async {
+                val retNote = helper.deleteEvResouce(note, resouceGuid)
+                // クラス変数のノート同期処理
+                retNote?.apply {
+                    currentEvNotebook.notes.also {
+                        it.filter { it.guid == this.guid }.first().apply {
+                            // 一旦削除
+                            it.remove(this)
+                        }
+                        // リソースが残っている場合、再設定
+                        if (retNote.resources.isNotEmpty())
+                            it.add(retNote)
                     }
-                    // リソース残る
-                    if(retNote.resources.isNotEmpty())
-                        it.add(retNote)
                 }
-            }
-
+            }.await()
         }
-        currentEvResource.clear()
     }
+
+
 
     /**
      * 初期表示設定
@@ -598,6 +621,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     /**
      * 初期表示時に呼び出され、Evernoteから画像を取得し、マーカーを作成する
      * ※FindNotesTask後にcallback
+     *
+     * ※以下のクラス変数を更新する
+     * currentEvNotebook
+     * imageMarkers
      */
     @TaskResult(id = "onInitFindNotes")
     fun onInitFindNotes(noteRefList: List<NoteRef>?) {
@@ -627,69 +654,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     /**
-     * Evernoteのノート新規作成or更新
-     * ※FindNotesTask後にcallback
-     */
-    @TaskResult(id = "onFindNotesAndCreateOrUpdate")
-    fun onFindNotesAndCreateOrUpdate(noteRefList: List<NoteRef>?) {
-
-
-            // タイトルが同じ郵便番号のノート
-            var targetRef: NoteRef? =
-                noteRefList?.filter { it.title.extractPostalCode() == currentEvResource.title.extractPostalCode() }
-                    ?.firstOrNull()
-
-            targetRef?.apply {
-
-                // ノートあり　更新
-                CoroutineScope(IO).launch(exceptionHandler) {
-                    async {
-                        val note = this@apply.loadNote(true, true, false, false)
-                        currentEvResource.resource.noteGuid = note.guid
-
-                        helper.updateNoteEvResource(note, currentEvResource.resource)
-                        currentEvNotebook.notes.filter { it.guid == note.guid }.first().resources.add(
-                            currentEvResource.resource
-                        )
-                    }.await()
-
-                    withContext(Main) {
-                        // マーカー作成
-                        val imageMarker = helper.createMarker(currentEvResource, mMap)
-                        imageMarker.showInfoWindow()
-                        imageMarkers.add(imageMarker)
-                    }
-                }
-
-
-            } ?: run() {
-
-
-                // ノートなし　新規登録
-
-                // resource.body = nullでエラー。使えず。EDAMUserException(errorCode:ENML_VALIDATION, parameter:The processing instruction target matching "[xX][mM][lL]" is not allowed.
-                //CreateNewNoteTask(note.title, note.content, null, evNotebook, null).start(this@MapFragment, "onCreateNewNote")
-
-                // 上記の代替処理
-                CoroutineScope(IO).launch(exceptionHandler) {
-                    async {
-                        helper.createNote(MyApplication.evNotebook?.guid, currentEvResource)
-                    }.await()
-
-                    withContext(Main) {
-                        // 再度ノート検索タスク実行
-                        FindNotesTask(0, 250, evNotebook, null, null).start(
-                            this@MapFragment,
-                            "onCreatedFindNote"
-                        )
-                    }
-                }
-            }
-
-    }
-
-    /**
      * ノート新規作成後にコールバックされる
+     *
+     * ※以下のクラス変数を更新する
+     * currentEvNotebook
+     * imageMarkers
+     *
      */
     @TaskResult(id = "onCreatedFindNote")
     fun onCreatedFindNote(noteRefList: List<NoteRef>?) {
@@ -715,6 +685,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     /**
+     * 未使用
      * CreateNewNoteTask実行後、コールバック
      * resource.body = nullでエラー。使えず。
      * EDAMUserException(errorCode:ENML_VALIDATION, parameter:The processing instruction target matching "[xX][mM][lL]" is not allowed.
@@ -766,7 +737,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    private fun isEvNotebookExist(): Boolean {
+    private fun isExistEvNotebook(): Boolean {
         if(evNotebook == null) {
             // ノートブック存在エラー
             Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG)
