@@ -236,7 +236,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
                     // 一度（削除したリソースの）マーカー削除
                     posChangeMarker?.apply {
-                        imageMarkers.remove(this)
+                        Log.d("posChangeMarker", this.hashCode().toString())
+                        Log.d("posChangeMarker img", imageMarkers.filter{it.id == this.id}.first().hashCode().toString())
+                        Log.d("posChangeMarker remove", imageMarkers.remove(this).toString())
+                        //imageMarkers.remove(this)
                     }
 
                 }
@@ -266,6 +269,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             async {
                 // 郵便番号が同じノートが存在する場合は更新
                 currentEvNotebook.notes.filter { it.title.extractPostalCode() == evResource.title.extractPostalCode() }.firstOrNull()?.apply {
+                    evResource.resource.noteGuid = this.guid // 注意!!
                     helper.updateNoteEvResource(this, evResource.resource)
                 } ?: run {
                     // 存在しない場合は新規作成
@@ -483,9 +487,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                     // 位置変更
                                     0 -> {
                                         posChangeMarker = it
-                                        Log.d("posChangeMarker", posChangeMarker.hashCode().toString())
-                                        Log.d("posChangeMarker", it.hashCode().toString())
-                                        Log.d("posChangeMarker equals", it.equals(posChangeMarker).toString())
+//                                        Log.d("posChangeMarker", posChangeMarker.hashCode().toString())
+//                                        Log.d("posChangeMarker", it.hashCode().toString())
+//                                        Log.d("posChangeMarker equals", it.equals(posChangeMarker).toString())
                                         isPosChangeMode.value = true
                                     }
                                     // 削除
@@ -553,8 +557,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }.await()
         }
     }
-
-
 
     /**
      * 初期表示設定
@@ -717,7 +719,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    // エラーハンドリングを作成
+    /**
+     * エラーハンドリングを作成
+     */
     private fun handleEvernoteApiException(throwable: Throwable) {
         Log.e("CoroutineException", "例外キャッチ $throwable")
         CoroutineScope(Main).launch {
@@ -737,6 +741,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    /**
+     * Evernoteノートブックの存在チェック
+     */
     private fun isExistEvNotebook(): Boolean {
         if(evNotebook == null) {
             // ノートブック存在エラー

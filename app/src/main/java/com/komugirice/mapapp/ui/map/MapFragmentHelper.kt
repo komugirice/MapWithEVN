@@ -85,6 +85,7 @@ object MapFragmentHelper {
                 mime = "image/jpg"
                 this.attributes = attributes
                 guid = UUID.randomUUID().toString()
+                // 注意!! noteGuidは設定できない
             }
 
         }
