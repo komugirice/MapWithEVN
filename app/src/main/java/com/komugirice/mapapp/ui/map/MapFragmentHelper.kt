@@ -63,7 +63,6 @@ object MapFragmentHelper {
         var `in` = BufferedInputStream(FileInputStream(imageFile))
         val data = FileData(EvernoteUtil.hash(`in`), imageFile)
 
-
         val opts = BitmapFactory.Options()
         opts.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(imageFile.absolutePath, opts)
@@ -79,7 +78,6 @@ object MapFragmentHelper {
             this.filePath = imageFile.absolutePath
 
             this.resource.apply{
-
                 this.data = data
                 //this.data.body = `in`.readBytes() // bodyがnullになるバグ
                 //height = opts.outHeight.toShort()
