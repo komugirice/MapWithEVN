@@ -68,14 +68,15 @@
 
         <TextView
             android:id="@+id/posInfoView"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/fab_margin"
-            android:gravity="center_vertical"
-            android:text="位置情報を指定して下さい"
-            android:textSize="16dp"
+            android:gravity="center_vertical|start"
+            android:text="位置マーカーを\n設定して下さい"
+            android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/posOkButton"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
