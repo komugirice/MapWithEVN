@@ -22,8 +22,8 @@
 
             <com.makeramen.roundedimageview.RoundedImageView
                 android:id="@+id/spotImageView"
-                android:layout_width="190dp"
-                android:layout_height="108dp"
+                android:layout_width="@dimen/spot_image_width"
+                android:layout_height="@dimen/spot_image_height"
                 android:scaleType="centerCrop"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

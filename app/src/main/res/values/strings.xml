@@ -4,7 +4,7 @@
 
     <string name="action_settings">Settings</string>
     <string name="menu_mode">保存モード</string>
-    <string name="menu_gallery">Gallery</string>
+    <string name="menu_gallery">ギャラリー</string>
     <string name="menu_evernote">Evernote設定</string>
     <string name="menu_preference">設定</string>
     <string name="menu_map">地図</string>
@@ -24,6 +24,9 @@
     <string name="current_point">この位置に登録します</string>
     <string name="menu_delete">削除</string>
     <string name="menu_position_change">位置変更</string>
+    <!-- gallery_preference -->
+    <string name="lat_label">緯度：</string>
+    <string name="lon_label">軽度：</string>
 
 </resources>
 

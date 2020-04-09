@@ -8,6 +8,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.komugirice.mapapp.EvImageData
 import com.komugirice.mapapp.databinding.ImageCellBinding
+import com.komugirice.mapapp.extension.eliminatePostalCode
+import com.komugirice.mapapp.extension.extractPostalCode
 
 class GalleryView : RecyclerView {
     constructor(ctx: Context) : super(ctx)
@@ -59,7 +61,14 @@ class GalleryView : RecyclerView {
 
         private fun onBindViewHolder(holder: ImageCellViewHolder, position: Int) {
             val data = items[position]
-            holder.binding.evImageData = data
+            holder.binding.apply{
+                filePath = data.filePath
+                postalCode = data.address.extractPostalCode()
+                address = data.address.eliminatePostalCode()
+                lat = data.lat.toString()
+                lon = data.lon.toString()
+
+            }
             holder.binding.root.setOnClickListener {
 
             }
