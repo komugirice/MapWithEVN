@@ -34,29 +34,23 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.material.snackbar.Snackbar
+import com.google.gson.Gson
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.mode
-import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
 import com.komugirice.mapapp.databinding.ImageViewDialogBinding
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode
 import com.komugirice.mapapp.extension.makeTempFile
 import com.komugirice.mapapp.extension.makeTempFileToStorage
-import com.komugirice.mapapp.task.CreateNewNoteTask
 import com.komugirice.mapapp.task.FindNotesTask
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.fragment_map.*
-import kotlinx.android.synthetic.main.fragment_map.view.*
-import kotlinx.android.synthetic.main.fragment_preference.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import net.vrallev.android.task.TaskResult
-import timber.log.Timber
 import java.io.File
-import java.io.IOException
 
 /**
  * MapFragment
@@ -216,9 +210,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             if(!isExistEvNotebook()) return
             // マーカーの画像データ
             val evImage = posChangeMarker?.tag as EvImageData
-
+            Log.d("posChangeMarker→evImage", Gson().toJson(evImage))
             // クラス変数から位置変更前にいたノート抽出
-            currentEvNotebook.notes.filter{it.guid == evImage.noteGuid}.firstOrNull()?.also {
+            currentEvNotebook.getNote(evImage.noteGuid)?.also {
 
                 // 変更前にいたノートの対象リソースの位置情報を更新
                 it?.resources?.filter{it.guid == evImage.guid}?.firstOrNull()?.apply {
@@ -234,12 +228,23 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     // 変更前にいたノートからリソースを削除
                     deleteEvResouceWrap(it, evImage.guid)
 
+                    imageMarkers.forEach {
+                        val tag = it.tag as EvImageData
+                        Log.d("imageMarkers削除前", Gson().toJson(tag))
+                    }
                     // 一度（削除したリソースの）マーカー削除
                     posChangeMarker?.apply {
                         Log.d("posChangeMarker", this.hashCode().toString())
                         Log.d("posChangeMarker img", imageMarkers.filter{it.id == this.id}.first().hashCode().toString())
+                        val tag = this.tag as EvImageData
+                        Log.d("posChangeMarker tag ", Gson().toJson(tag))
                         Log.d("posChangeMarker remove", imageMarkers.remove(this).toString())
                         //imageMarkers.remove(this)
+                        this.remove()
+                    }
+                    imageMarkers.forEach {
+                        val tag = it.tag as EvImageData
+                        Log.d("imageMarkers削除後", Gson().toJson(tag))
                     }
 
                 }
@@ -487,6 +492,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                     // 位置変更
                                     0 -> {
                                         posChangeMarker = it
+                                        val tag = it?.tag as EvImageData
+                                        Log.d("posChangeMarker.tag", Gson().toJson(tag))
 //                                        Log.d("posChangeMarker", posChangeMarker.hashCode().toString())
 //                                        Log.d("posChangeMarker", it.hashCode().toString())
 //                                        Log.d("posChangeMarker equals", it.equals(posChangeMarker).toString())
@@ -501,8 +508,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                         } else {
                                             // Evernote画像削除
                                             val tag = it.tag as EvImageData
-                                            val note = currentEvNotebook.notes.filter{it.guid == tag.noteGuid}.first()
-                                            deleteEvResouceWrap(note, tag.guid)
+                                            val note = currentEvNotebook.getNote(tag.noteGuid)
+                                            deleteEvResouceWrap(note!!, tag.guid)
                                             currentEvResource.clear()
                                         }
                                         // マーカー削除
@@ -545,7 +552,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 // クラス変数のノート同期処理
                 retNote?.apply {
                     currentEvNotebook.notes.also {
-                        it.filter { it.guid == this.guid }.first().apply {
+                        currentEvNotebook.getNote(this.guid).apply {
                             // 一旦削除
                             it.remove(this)
                         }
@@ -678,7 +685,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     // マーカー作成
                     val resource = note.resources.first() // 必ず一つ
                     val imageMarker = helper.createMarkerFromEvernote(resource, note.title, mMap)
+                    imageMarkers.forEach {
+                        val tag = it.tag as EvImageData
+                        Log.d("imageMarkers追加前", Gson().toJson(tag))
+                    }
                     imageMarkers.add(imageMarker)
+                    imageMarkers.forEach {
+                        val tag = it.tag as EvImageData
+                        Log.d("imageMarkers追加後", Gson().toJson(tag))
+                    }
                     imageMarker.showInfoWindow()
                 }
             }
@@ -781,6 +796,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         class EvNotebook {
             var guid = evNotebook?.guid ?: ""
             var notes: MutableList<Note> = mutableListOf()
+
+            fun getNote(noteGuid: String): Note? { return this.notes.filter{it.guid == noteGuid}.firstOrNull() }
         }
     }
 }
