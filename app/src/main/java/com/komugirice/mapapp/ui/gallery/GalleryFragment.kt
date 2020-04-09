@@ -29,6 +29,7 @@ class GalleryFragment : Fragment() {
         binding.lifecycleOwner = this
 
         viewModel = ViewModelProviders.of(this).get(GalleryViewModel::class.java).apply {
+            context = context
             items.observe(this@GalleryFragment, Observer {
                 binding.apply {
                     galleryView.customAdapter.refresh(it)

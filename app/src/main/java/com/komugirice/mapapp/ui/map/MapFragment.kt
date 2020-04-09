@@ -41,9 +41,11 @@ import com.komugirice.mapapp.MyApplication.Companion.mode
 import com.komugirice.mapapp.databinding.ImageViewDialogBinding
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode
+import com.komugirice.mapapp.extension.extractPostalCodeAndHalfAddress
 import com.komugirice.mapapp.extension.makeTempFile
 import com.komugirice.mapapp.extension.makeTempFileToStorage
 import com.komugirice.mapapp.task.FindNotesTask
+import com.komugirice.mapapp.util.AppUtil
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.fragment_map.*
 import kotlinx.coroutines.*
@@ -266,7 +268,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     helper.updateNoteEvResource(this, evResource.resource)
                 } ?: run {
                     // 存在しない場合は新規作成
-                    helper.createNote(evNotebook?.guid, evResource.title, evResource.resource)
+                    val title = evResource.title.extractPostalCodeAndHalfAddress()
+                    helper.createNote(evNotebook?.guid, title, evResource.resource)
                     isCreate = true
                 }
             }.await()
@@ -309,7 +312,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
             // 位置情報設定
             var latLng: LatLng = focusPosition()
-            val address = helper.getPostalCodeAndHalfAddress(context, latLng)
+            val address = AppUtil.getPostalCodeAndHalfAddress(context, latLng)
 
             if (mode == Mode.CACHE) {
                 // キャッシュ
@@ -398,7 +401,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
      */
     private fun createTapMarker(latLng: LatLng) {
         tapLocation = LatLng(latLng.latitude, latLng.longitude).also {
-            val locationStr = helper.getPostalCodeAndAllAddress(context, latLng)
+            val locationStr = AppUtil.getPostalCodeAndAllAddress(context, latLng)
             tapMarker?.remove()
             tapMarker = mMap.addMarker(
                 MarkerOptions()

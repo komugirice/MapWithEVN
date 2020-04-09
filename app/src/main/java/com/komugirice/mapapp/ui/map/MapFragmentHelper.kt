@@ -29,28 +29,6 @@ import java.util.*
 object MapFragmentHelper {
 
     /**
-     * 住所取得
-     */
-    fun getPostalCodeAndAllAddress(context: Context?, latLng: LatLng): String {
-        return Geocoder(context, Locale.JAPAN)
-            .getFromLocation(latLng.latitude, latLng.longitude, 1)
-            .get(0)
-            .getAddressLine(0)
-            .extractPostalCodeAndAllAddress()
-    }
-
-    /**
-     * 住所取得
-     */
-    fun getPostalCodeAndHalfAddress(context: Context?, latLng: LatLng): String {
-        return Geocoder(context, Locale.JAPAN)
-            .getFromLocation(latLng.latitude, latLng.longitude, 1)
-            .get(0)
-            .getAddressLine(0)
-            .extractPostalCodeAndHalfAddress()
-    }
-
-    /**
      * Evernoteノート情報作成
      */
     fun createEvResource(imageFile: File, latLng: LatLng, title: String): MapFragment.Companion.EvResource {
