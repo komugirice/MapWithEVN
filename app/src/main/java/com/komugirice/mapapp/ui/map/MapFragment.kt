@@ -92,8 +92,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     // Evernote保存
     private var currentEvNotebook = EvNotebook()
     private var currentEvResource = EvResource()
-    // マーカー保持用
-    private var imageMarkers = mutableListOf<Marker>()
+
     
     // 位置
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -754,6 +753,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         private const val TOKYO_LON = 139.76608399999998
         private const val OSAKA_LAT = 34.7024
         private const val OSAKA_LON = 135.4959
+        // マーカー保持用
+        var imageMarkers = mutableListOf<Marker>()
+
         fun start(context: Context?) = context?.apply {
             startActivity(Intent(context, MapFragment::class.java))
         }

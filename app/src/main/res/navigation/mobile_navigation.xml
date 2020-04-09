@@ -17,4 +17,10 @@
         android:label="@string/menu_preference"
         tools:layout="@layout/fragment_preference" />
 
+    <fragment
+        android:id="@+id/nav_gallery"
+        android:name="com.komugirice.mapapp.ui.gallery.GalleryFragment"
+        android:label="@string/menu_gallery"
+        tools:layout="@layout/fragment_gallery" />
+
 </navigation>

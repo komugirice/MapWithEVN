@@ -1,5 +1,7 @@
 package com.komugirice.mapapp
 
+import java.io.Serializable
+
 /**
  * @author Jane
  */
