@@ -68,6 +68,7 @@ import java.io.File
  * onMapReady
  * createTapMarker
  * initGoogleMap
+ * deleteEvResourceWrap
  * initData
  * dispatchTakePictureIntent
  * onInitFindNotes
@@ -75,6 +76,7 @@ import java.io.File
  * onCreateNewNote
  * refresh
  * handleEvernoteApiException
+ * isExistEvNotebook
  *
  */
 class MapFragment : Fragment(), OnMapReadyCallback {
@@ -210,7 +212,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             if(!isExistEvNotebook()) return
             // マーカーの画像データ
             val evImage = posChangeMarker?.tag as EvImageData
-            Log.d("posChangeMarker→evImage", Gson().toJson(evImage))
             // クラス変数から位置変更前にいたノート抽出
             currentEvNotebook.getNote(evImage.noteGuid)?.also {
 
@@ -228,23 +229,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     // 変更前にいたノートからリソースを削除
                     deleteEvResouceWrap(it, evImage.guid)
 
-                    imageMarkers.forEach {
-                        val tag = it.tag as EvImageData
-                        Log.d("imageMarkers削除前", Gson().toJson(tag))
-                    }
                     // 一度（削除したリソースの）マーカー削除
                     posChangeMarker?.apply {
-                        Log.d("posChangeMarker", this.hashCode().toString())
-                        Log.d("posChangeMarker img", imageMarkers.filter{it.id == this.id}.first().hashCode().toString())
-                        val tag = this.tag as EvImageData
-                        Log.d("posChangeMarker tag ", Gson().toJson(tag))
-                        Log.d("posChangeMarker remove", imageMarkers.remove(this).toString())
-                        //imageMarkers.remove(this)
+                        imageMarkers.remove(this)
+                        // 自分を削除しない場合残ってしまった
                         this.remove()
-                    }
-                    imageMarkers.forEach {
-                        val tag = it.tag as EvImageData
-                        Log.d("imageMarkers削除後", Gson().toJson(tag))
                     }
 
                 }
@@ -492,11 +481,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                     // 位置変更
                                     0 -> {
                                         posChangeMarker = it
-                                        val tag = it?.tag as EvImageData
-                                        Log.d("posChangeMarker.tag", Gson().toJson(tag))
-//                                        Log.d("posChangeMarker", posChangeMarker.hashCode().toString())
-//                                        Log.d("posChangeMarker", it.hashCode().toString())
-//                                        Log.d("posChangeMarker equals", it.equals(posChangeMarker).toString())
                                         isPosChangeMode.value = true
                                     }
                                     // 削除
@@ -685,15 +669,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     // マーカー作成
                     val resource = note.resources.first() // 必ず一つ
                     val imageMarker = helper.createMarkerFromEvernote(resource, note.title, mMap)
-                    imageMarkers.forEach {
-                        val tag = it.tag as EvImageData
-                        Log.d("imageMarkers追加前", Gson().toJson(tag))
-                    }
                     imageMarkers.add(imageMarker)
-                    imageMarkers.forEach {
-                        val tag = it.tag as EvImageData
-                        Log.d("imageMarkers追加後", Gson().toJson(tag))
-                    }
                     imageMarker.showInfoWindow()
                 }
             }
