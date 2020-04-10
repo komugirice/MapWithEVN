@@ -20,4 +20,12 @@ open class ImageData {
 class EvImageData: ImageData() {
     var guid = ""
     var noteGuid = ""
+
+    fun applyImageData(i: ImageData) {
+        this.lat = i.lat
+        this.lon = i.lon
+        this.filePath = i.filePath
+        this.address = i.address
+        this.id = i.id
+    }
 }
