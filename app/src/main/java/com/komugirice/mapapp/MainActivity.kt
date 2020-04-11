@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.replace
 import androidx.navigation.NavGraph
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
@@ -29,6 +30,7 @@ import com.komugirice.mapapp.task.GetUserTask
 import com.komugirice.mapapp.ui.gallery.GalleryFragment
 import com.komugirice.mapapp.ui.map.MapFragment
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.fragment_map.*
 import net.vrallev.android.task.TaskResult
 
 /**
@@ -141,16 +143,18 @@ class MainActivity : AppCompatActivity(),
 
     override fun onImageSelected(target: EvImageData) {
 
-        val marker = MapFragment.imageMarkers.filter{
-            if(mode == Mode.CACHE) {
-                val tag = it.tag as ImageData
-                tag.id == target.id
-            } else {
-                val tag = it.tag as EvImageData
-                tag.id == target.id
-            }
-        }.first()
-        marker.showInfoWindow()
+        val bundle = Bundle()
+        bundle.putBoolean(MapFragment.KEY_IS_REFRESH, true)
+        bundle.putSerializable(MapFragment.KEY_IMAGE_DATA, target)
+
+        val mapFragment = MapFragment().apply{
+            arguments = bundle
+        }
+
+        val transaction =  supportFragmentManager.beginTransaction()
+        transaction.replace(R.id.nav_host_fragment, mapFragment)
+        transaction.commit()
+
     }
 
     companion object {

@@ -87,7 +87,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     private val helper = MapFragmentHelper
 
-    private lateinit var mMap: GoogleMap
+    //private lateinit var mMap: GoogleMap
 
     // アプリ内保存
     private var images = mutableListOf<ImageData>()
@@ -95,13 +95,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private var currentEvNotebook = EvNotebook()
     private var currentEvResource = EvResource()
 
-    
     // 位置
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var myLocate: LatLng
     private var tapLocation: LatLng? = null
     private var tapMarker: Marker? = null
-    
+
     // 写真
     private lateinit var currentPhotoPath: String
     private lateinit var currentPhotoUri: Uri
@@ -109,8 +108,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private var isPosChangeMode = MutableLiveData<Boolean>(false)
     private var posChangeMarker: Marker? = null
 
-    private val exceptionHandler: CoroutineExceptionHandler
-            = CoroutineExceptionHandler { _, throwable -> handleEvernoteApiException(throwable)}
+    private var isRefresh = false
+    private var refreshEvImageData: EvImageData? = null
+
+    private val exceptionHandler: CoroutineExceptionHandler =
+        CoroutineExceptionHandler { _, throwable -> handleEvernoteApiException(throwable) }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -118,10 +120,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         savedInstanceState: Bundle?
     ): View? {
 
-        val root = inflater.inflate(R.layout.fragment_map,container, false)
+        val root = inflater.inflate(R.layout.fragment_map, container, false)
 
-        isPosChangeMode.observe(this, Observer {
-            if(it) {
+        isPosChangeMode.observe(viewLifecycleOwner, Observer {
+            if (it) {
                 isPosChangeModeGroup.visibility = View.VISIBLE
                 buttonGroup.visibility = View.GONE
             } else {
@@ -137,11 +139,21 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
+        arguments?.apply {
+            isRefresh = getBoolean(KEY_IS_REFRESH)
+            refreshEvImageData = getSerializable(KEY_IMAGE_DATA) as EvImageData
+        }
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment?
-        mapFragment?.apply{
-            getMapAsync(this@MapFragment)
+        val mapFragment =
+            childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment?
+        mapFragment?.apply {
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(context!!)
+            if (!isRefresh)
+                getMapAsync(this@MapFragment)
+            else
+                onMapReady(mMap)
+
         }
         initClick()
     }
@@ -184,11 +196,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         var targetTag = posChangeMarker?.tag as ImageData
         var tap = tapMarker?.tag as ImageData
 
-        if(targetTag == null || tap == null) return
+        if (targetTag == null || tap == null) return
 
         val tapLatLng = LatLng(tap.lat, tap.lon)
 
-        targetTag.apply{
+        targetTag.apply {
             lat = tap.lat
             lon = tap.lon
             address = tap.address
@@ -203,21 +215,21 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         // 保存
         if (mode == Mode.CACHE) {
 
-            images.filter{it.id == targetTag.id}.firstOrNull()?.apply{
+            images.filter { it.id == targetTag.id }.firstOrNull()?.apply {
                 images.remove(this)
                 images.add(targetTag)
             }
             Prefs().allImage.put(AllImage().apply { allImage = images })
             posChangeMarker?.showInfoWindow()
         } else {
-            if(!isExistEvNotebook()) return
+            if (!isExistEvNotebook()) return
             // マーカーの画像データ
             val evImage = posChangeMarker?.tag as EvImageData
             // クラス変数から位置変更前にいたノート抽出
             currentEvNotebook.getNote(evImage.noteGuid)?.also {
 
                 // 変更前にいたノートの対象リソースの位置情報を更新
-                it?.resources?.filter{it.guid == evImage.guid}?.firstOrNull()?.apply {
+                it?.resources?.filter { it.guid == evImage.guid }?.firstOrNull()?.apply {
                     this.attributes.latitude = evImage.lat
                     this.attributes.longitude = evImage.lon
 
@@ -304,7 +316,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             uri = data.data
 
         // カメラ
-        if(requestCode == REQUEST_CODE_CAMERA)
+        if (requestCode == REQUEST_CODE_CAMERA)
             uri = currentPhotoUri
 
 
@@ -337,7 +349,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 // Evernote
                 var imageFile = it.makeTempFile()
                 if (imageFile != null) {
-                    if(!isExistEvNotebook()) return
+                    if (!isExistEvNotebook()) return
 
                     // 設定情報からリソース作成
                     currentEvResource = helper.createEvResource(imageFile, latLng, address)
@@ -370,25 +382,32 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         mMap = googleMap
         mMap.uiSettings.isZoomGesturesEnabled = true
         mMap.uiSettings.isMapToolbarEnabled = false
-
         // 現在地設定
-        context?.apply{
+        context?.apply {
             // 現在位置パーミッションチェック
-            if(MainActivity.checkPermission(this)){
+            if (MainActivity.checkPermission(this)) {
                 fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
                     mMap.isMyLocationEnabled = true
                     mMap.uiSettings.isMyLocationButtonEnabled = true
                     //myLocate = MainActivity.locationManager.getLastKnownLocation("gps")
-                    myLocate = LatLng(location?.latitude ?: TOKYO_LAT, location?.longitude ?: TOKYO_LON)
+                    myLocate = LatLng(
+                        location?.latitude ?: TOKYO_LAT,
+                        location?.longitude ?: TOKYO_LON
+                    )
                     createTapMarker(LatLng(myLocate.latitude, myLocate.longitude))
-                    initGoogleMap()
+                    if (!isRefresh)
+                        initGoogleMap()
                 }
             } else {
                 myLocate = LatLng(TOKYO_LAT, TOKYO_LON)
-                initGoogleMap()
+                if (!isRefresh)
+                    initGoogleMap()
             }
         }
-        initData()
+        if (!isRefresh) {
+            initData()
+        } else
+            refreshData()
 
         // タップした時のリスナーをセット
         mMap.setOnMapClickListener {
@@ -407,9 +426,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 MarkerOptions()
                     .position(it)
                     .title(locationStr)
-                    .snippet("この位置に登録します"))
+                    .snippet("この位置に登録します")
+            )
             tapMarker?.apply {
-                tag = ImageData().apply{
+                tag = ImageData().apply {
                     this.address = locationStr
                     this.lat = latLng.latitude
                     this.lon = latLng.longitude
@@ -419,8 +439,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         }
     }
-
-
 
     private fun initGoogleMap() {
         mMap.apply {
@@ -434,13 +452,20 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 //            moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBoundsBuilder.build(), 150))
             val image = images.lastOrNull()
             // 現在位置設定
-            moveCamera(CameraUpdateFactory.newLatLngZoom(if (image == null) LatLng(myLocate?.latitude, myLocate.longitude) else LatLng(image.lat, image.lon), 15F))
+            moveCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    if (image == null) LatLng(
+                        myLocate?.latitude,
+                        myLocate.longitude
+                    ) else LatLng(image.lat, image.lon), 15F
+                )
+            )
 
             // InfoWindowクリック時
             this.setOnInfoWindowClickListener {
                 var imageData = it.tag as ImageData
                 // 位置マーカーの場合（filePathなし）
-                if(imageData.filePath.isEmpty()) {
+                if (imageData.filePath.isEmpty()) {
                     it.hideInfoWindow()
                     return@setOnInfoWindowClickListener
                 }
@@ -514,7 +539,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             this.setOnMarkerClickListener {
                 // showInfoWindow表示
                 var imageData = it.tag as ImageData
-                imageData?.apply{
+                imageData?.apply {
                     it.title = imageData.address
                     it.showInfoWindow()
                 }
@@ -570,14 +595,46 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 imageMarkers.add(marker)
             }
         }
-        // TODO Evernote
         if (mode == Mode.EVERNOTE) {
             evNotebook?.apply {
                 // ノート検索タスク実行
-                FindNotesTask(0, 250, evNotebook, null, null).start(this@MapFragment, "onInitFindNotes")
+                FindNotesTask(0, 250, evNotebook, null, null).start(
+                    this@MapFragment,
+                    "onInitFindNotes"
+                )
             }
         }
 
+    }
+
+    /**
+     * 再描画設定
+     */
+    private fun refreshData() {
+
+        refreshEvImageData?.apply {
+
+            val marker = MapFragment.imageMarkers.filter {
+                if (mode == Mode.CACHE) {
+                    val tag = it.tag as ImageData
+                    tag.id == this.id
+                } else {
+                    val tag = it.tag as EvImageData
+                    tag.id == this.id
+                }
+            }.first()
+            marker.showInfoWindow()
+            myLocate = LatLng(this.lat, this.lon)
+            mMap.moveCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(
+                        myLocate?.latitude,
+                        myLocate.longitude
+                    ), 15F
+                )
+            )
+
+        }
     }
 
     /**
@@ -585,7 +642,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
      */
     private fun dispatchTakePictureIntent() {
         Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
-            activity?.apply{
+            activity?.apply {
                 // Ensure that there's a camera activity to handle the intent
                 takePictureIntent.resolveActivity(packageManager)?.also {
                     // Create the File where the photo should go
@@ -634,7 +691,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
                 currentEvNotebook.notes.add(note)
 
-                withContext(Dispatchers.Main){
+                withContext(Dispatchers.Main) {
                     resources?.forEach {
                         // マーカー作成
                         val imageMarker = helper.createMarkerFromEvernote(it, note.title, mMap)
@@ -662,12 +719,14 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         CoroutineScope(IO).launch(exceptionHandler) {
 
             // 対象のノートを抽出する
-            var targetRef: NoteRef? = noteRefList?.filter{it.title.extractPostalCode() == currentEvResource.title.extractPostalCode()}?.firstOrNull()
+            var targetRef: NoteRef? =
+                noteRefList?.filter { it.title.extractPostalCode() == currentEvResource.title.extractPostalCode() }
+                    ?.firstOrNull()
             targetRef?.apply {
                 val note = this.loadNote(true, true, false, false)
                 currentEvNotebook.notes.add(note)
 
-                withContext(Dispatchers.Main){
+                withContext(Dispatchers.Main) {
                     // マーカー作成
                     val resource = note.resources.first() // 必ず一つ
                     val imageMarker = helper.createMarkerFromEvernote(resource, note.title, mMap)
@@ -686,7 +745,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
      * EDAMUserException(errorCode:ENML_VALIDATION, parameter:The processing instruction target matching "[xX][mM][lL]" is not allowed.
      *
      */
-    @TaskResult(id="onCreateNewNote")
+    @TaskResult(id = "onCreateNewNote")
     fun onCreateNewNote(note: Note?) {
         if (note != null) {
             currentEvNotebook.notes.add(note)
@@ -704,7 +763,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
      * フラグメントの再描画
      */
     private fun refresh() {
-        fragmentManager?.apply{
+        fragmentManager?.apply {
             val trans = this.beginTransaction()
             trans.detach(this@MapFragment)
             trans.attach(this@MapFragment)
@@ -721,12 +780,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             var errorMsg = ""
             var message = throwable.message ?: ""
 
-            if(throwable is EDAMUserException){
-                if(throwable.errorCode == EDAMErrorCode.QUOTA_REACHED) {
+            if (throwable is EDAMUserException) {
+                if (throwable.errorCode == EDAMErrorCode.QUOTA_REACHED) {
                     errorMsg = "Evernoteアカウントのアップロード容量の上限に達しました"
                 }
             }
-            if(errorMsg.isEmpty())
+            if (errorMsg.isEmpty())
                 errorMsg = "API実行中に予期せぬエラーが発生しました\n${throwable}"
 
 
@@ -738,7 +797,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
      * Evernoteノートブックの存在チェック
      */
     private fun isExistEvNotebook(): Boolean {
-        if(evNotebook == null) {
+        if (evNotebook == null) {
             // ノートブック存在エラー
             Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG)
                 .show()
@@ -750,12 +809,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     companion object {
         private const val REQUEST_CODE_CHOOSE_IMAGE = 1000
         private const val REQUEST_CODE_CAMERA = 1001
+        const val KEY_IS_REFRESH = "key_isRefresh"
+        const val KEY_IMAGE_DATA = "key_imageData"
         private var CURRENT_LAT: Double = 0.0
         private var CURRENT_LON: Double = 0.0
         private const val TOKYO_LAT = 35.681382
         private const val TOKYO_LON = 139.76608399999998
         private const val OSAKA_LAT = 34.7024
         private const val OSAKA_LON = 135.4959
+        lateinit var mMap: GoogleMap
         // マーカー保持用
         var imageMarkers = mutableListOf<Marker>()
 
@@ -771,14 +833,18 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             var title: String = ""
             var filePath: String = ""
             var resource: Resource = Resource()
-            fun clear(){ title = ""; resource = Resource() }
+            fun clear() {
+                title = ""; resource = Resource()
+            }
         }
 
         class EvNotebook {
             var guid = evNotebook?.guid ?: ""
             var notes: MutableList<Note> = mutableListOf()
 
-            fun getNote(noteGuid: String): Note? { return this.notes.filter{it.guid == noteGuid}.firstOrNull() }
+            fun getNote(noteGuid: String): Note? {
+                return this.notes.filter { it.guid == noteGuid }.firstOrNull()
+            }
         }
     }
 }
