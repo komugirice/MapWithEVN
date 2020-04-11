@@ -26,7 +26,7 @@
     <string name="menu_position_change">位置変更</string>
     <!-- gallery_preference -->
     <string name="lat_label">緯度：</string>
-    <string name="lon_label">軽度：</string>
+    <string name="lon_label">経度：</string>
 
 </resources>
 

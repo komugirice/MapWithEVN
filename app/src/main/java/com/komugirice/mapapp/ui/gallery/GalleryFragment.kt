@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import com.komugirice.mapapp.EvImageData
 import com.komugirice.mapapp.R
 import com.komugirice.mapapp.databinding.FragmentGalleryBinding
 import kotlinx.android.synthetic.main.fragment_gallery.*
@@ -19,6 +20,20 @@ class GalleryFragment : Fragment() {
     private lateinit var binding: FragmentGalleryBinding
     private lateinit var viewModel: GalleryViewModel
 
+    private lateinit var mCallback: OnImageSelectedListener
+
+    // The container Activity must implement this interface so the frag can deliver messages
+    interface OnImageSelectedListener {
+        /** Called by MapFragment when a list item is selected  */
+        fun onImageSelected(data: EvImageData)
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        mCallback = context as OnImageSelectedListener
+
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -28,15 +43,22 @@ class GalleryFragment : Fragment() {
         binding = FragmentGalleryBinding.inflate(inflater, container, false)
         binding.lifecycleOwner = this
 
+        // initFriendView
+        binding.galleryView.customAdapter.onClickCallBack = {
+            mCallback.onImageSelected(it)
+        }
+        
         viewModel = ViewModelProviders.of(this).get(GalleryViewModel::class.java).apply {
             context = context
-            items.observe(this@GalleryFragment, Observer {
+            items.observe(viewLifecycleOwner, Observer {
                 binding.apply {
                     galleryView.customAdapter.refresh(it)
                     swipeRefreshLayout.isRefreshing = false
                 }
             })
         }
+
+
 
         return binding.root
     }

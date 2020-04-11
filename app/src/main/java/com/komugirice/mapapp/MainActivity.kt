@@ -20,10 +20,13 @@ import com.evernote.edam.type.User
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.evernoteUser
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
+import com.komugirice.mapapp.MyApplication.Companion.mode
 import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
+import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.interfaces.Update
 import com.komugirice.mapapp.task.FindNotebooksTask
 import com.komugirice.mapapp.task.GetUserTask
+import com.komugirice.mapapp.ui.gallery.GalleryFragment
 import com.komugirice.mapapp.ui.map.MapFragment
 import kotlinx.android.synthetic.main.activity_main.*
 import net.vrallev.android.task.TaskResult
@@ -32,7 +35,7 @@ import net.vrallev.android.task.TaskResult
  * @author komugirice
  */
 class MainActivity : AppCompatActivity(),
-    EvernoteLoginFragment.ResultCallback{
+    EvernoteLoginFragment.ResultCallback, GalleryFragment.OnImageSelectedListener{
 
     // drawer
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -134,6 +137,20 @@ class MainActivity : AppCompatActivity(),
         } else {
             Toast.makeText(this, "Evernote連携に失敗しました", Toast.LENGTH_LONG).show()
         }
+    }
+
+    override fun onImageSelected(target: EvImageData) {
+
+        val marker = MapFragment.imageMarkers.filter{
+            if(mode == Mode.CACHE) {
+                val tag = it.tag as ImageData
+                tag.id == target.id
+            } else {
+                val tag = it.tag as EvImageData
+                tag.id == target.id
+            }
+        }.first()
+        marker.showInfoWindow()
     }
 
     companion object {

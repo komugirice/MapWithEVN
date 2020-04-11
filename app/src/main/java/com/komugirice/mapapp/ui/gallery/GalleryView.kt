@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.komugirice.mapapp.EvImageData
+import com.komugirice.mapapp.ImageData
 import com.komugirice.mapapp.databinding.ImageCellBinding
 import com.komugirice.mapapp.extension.eliminatePostalCode
 import com.komugirice.mapapp.extension.extractPostalCode
@@ -34,6 +35,8 @@ class GalleryView : RecyclerView {
 
     class Adapter(val context: Context) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val items = mutableListOf<EvImageData>()
+
+        lateinit var onClickCallBack: (EvImageData) -> Unit
 
 
         fun refresh(list: List<EvImageData>) {
@@ -70,7 +73,7 @@ class GalleryView : RecyclerView {
 
             }
             holder.binding.root.setOnClickListener {
-
+                onClickCallBack.invoke(data)
             }
         }
 
