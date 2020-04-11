@@ -87,7 +87,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     private val helper = MapFragmentHelper
 
-    //private lateinit var mMap: GoogleMap
+    private lateinit var mMap: GoogleMap
 
     // アプリ内保存
     private var images = mutableListOf<ImageData>()
@@ -149,10 +149,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment?
         mapFragment?.apply {
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(context!!)
-            if (!isRefresh)
-                getMapAsync(this@MapFragment)
-            else
-                onMapReady(mMap)
+            getMapAsync(this@MapFragment)
+
 
         }
         initClick()
@@ -395,19 +393,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         location?.longitude ?: TOKYO_LON
                     )
                     createTapMarker(LatLng(myLocate.latitude, myLocate.longitude))
-                    if (!isRefresh)
-                        initGoogleMap()
+                    initGoogleMap()
                 }
             } else {
                 myLocate = LatLng(TOKYO_LAT, TOKYO_LON)
-                if (!isRefresh)
-                    initGoogleMap()
+                initGoogleMap()
             }
         }
-        if (!isRefresh) {
-            initData()
-        } else
-            refreshData()
+        initData()
+
 
         // タップした時のリスナーをセット
         mMap.setOnMapClickListener {
@@ -594,6 +588,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 marker.tag = it
                 imageMarkers.add(marker)
             }
+            if (isRefresh)
+                refreshData()
         }
         if (mode == Mode.EVERNOTE) {
             evNotebook?.apply {
@@ -617,10 +613,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             val marker = MapFragment.imageMarkers.filter {
                 if (mode == Mode.CACHE) {
                     val tag = it.tag as ImageData
-                    tag.id == this.id
+                    tag.lat == this.lat && tag.lon == this.lon
                 } else {
                     val tag = it.tag as EvImageData
-                    tag.id == this.id
+                    tag.lat == this.lat && tag.lon == this.lon
                 }
             }.first()
             marker.showInfoWindow()
@@ -700,6 +696,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     }
                 }
 
+            }
+            withContext(Dispatchers.Main) {
+                if (isRefresh)
+                    refreshData()
             }
 
         }
@@ -817,7 +817,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         private const val TOKYO_LON = 139.76608399999998
         private const val OSAKA_LAT = 34.7024
         private const val OSAKA_LON = 135.4959
-        lateinit var mMap: GoogleMap
         // マーカー保持用
         var imageMarkers = mutableListOf<Marker>()
 
