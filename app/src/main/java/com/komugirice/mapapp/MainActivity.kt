@@ -161,7 +161,6 @@ class MainActivity : BaseActivity(),
 //        transaction.commit()
 
         //MapFragment.reStartFromGallery(this, true, target)
-
     }
 
     override fun onBackPressed() {

@@ -43,6 +43,7 @@ import com.komugirice.mapapp.extension.extractPostalCode
 import com.komugirice.mapapp.extension.extractPostalCodeAndHalfAddress
 import com.komugirice.mapapp.extension.makeTempFile
 import com.komugirice.mapapp.extension.makeTempFileToStorage
+import com.komugirice.mapapp.interfaces.Update
 import com.komugirice.mapapp.task.FindNotesTask
 import com.komugirice.mapapp.util.AppUtil
 import com.squareup.picasso.Picasso
@@ -80,7 +81,7 @@ import java.io.File
  * isExistEvNotebook
  *
  */
-class MapFragment : BaseFragment(), OnMapReadyCallback {
+class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
 
     private lateinit var viewModel: MapFragmentViewModel
 
@@ -394,13 +395,14 @@ class MapFragment : BaseFragment(), OnMapReadyCallback {
                     )
                     createTapMarker(LatLng(myLocate.latitude, myLocate.longitude))
                     initGoogleMap()
+                    initData()
                 }
             } else {
                 myLocate = LatLng(TOKYO_LAT, TOKYO_LON)
                 initGoogleMap()
+                initData()
             }
         }
-        initData()
 
 
         // タップした時のリスナーをセット
@@ -773,6 +775,10 @@ class MapFragment : BaseFragment(), OnMapReadyCallback {
             trans.attach(this@MapFragment)
             trans.commit()
         }
+    }
+
+    override fun update() {
+        refreshData()
     }
 
     /**

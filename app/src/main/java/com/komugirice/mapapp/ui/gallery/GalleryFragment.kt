@@ -49,7 +49,7 @@ class GalleryFragment : Fragment() {
             MapFragment.isRefresh = true
             MapFragment.refreshEvImageData = it
             this.parentFragmentManager.popBackStack()
-//            mCallback.onImageSelected(it)
+            mCallback.onImageSelected(it)
         }
         
         viewModel = ViewModelProviders.of(this).get(GalleryViewModel::class.java).apply {
