@@ -110,8 +110,8 @@ class MapFragment : BaseFragment(), OnMapReadyCallback {
     private var isPosChangeMode = MutableLiveData<Boolean>(false)
     private var posChangeMarker: Marker? = null
 
-    private var isRefresh = false
-    private var refreshEvImageData: EvImageData? = null
+//    private var isRefresh = false
+//    private var refreshEvImageData: EvImageData? = null
 
     private val exceptionHandler: CoroutineExceptionHandler =
         CoroutineExceptionHandler { _, throwable -> handleEvernoteApiException(throwable) }
@@ -141,11 +141,11 @@ class MapFragment : BaseFragment(), OnMapReadyCallback {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        arguments?.apply {
-            isRefresh = getBoolean(KEY_IS_REFRESH)
+//        arguments?.apply {
+//            isRefresh = getBoolean(KEY_IS_REFRESH)
             if(isRefresh) context?.apply{showProgressDialog(this)}
-            refreshEvImageData = getSerializable(KEY_IMAGE_DATA) as EvImageData
-        }
+//            refreshEvImageData = getSerializable(KEY_IMAGE_DATA) as EvImageData
+//        }
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment =
@@ -824,9 +824,21 @@ class MapFragment : BaseFragment(), OnMapReadyCallback {
         // マーカー保持用
         var imageMarkers = mutableListOf<Marker>()
 
+        // 画面間引き継ぎ項目
+        var isRefresh = false
+        var refreshEvImageData: EvImageData? = null
+
+
         fun start(context: Context?) = context?.apply {
             startActivity(Intent(context, MapFragment::class.java))
         }
+
+//        fun reStartFromGallery(context: Context?, isRefresh: Boolean
+//                               , evImageData: EvImageData) = context?.apply {
+//            startActivity(Intent(context, MapFragment::class.java)
+//                .putExtra(MapFragment.KEY_IS_REFRESH, true)
+//                .putExtra(MapFragment.KEY_IMAGE_DATA, evImageData))
+//        }
 
         /**
          * Evernoteノート情報関連クラス

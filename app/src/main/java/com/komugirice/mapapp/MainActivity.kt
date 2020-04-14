@@ -143,21 +143,24 @@ class MainActivity : BaseActivity(),
     }
 
     /**
-     * GalleryFragmentのonClickCallBackで呼び出し
+     * GalleryFragmentからのonClickCallBackで呼び出し
+     * bundleからMapFragment.companionの変数に変更したので不要になった
      */
     override fun onImageSelected(target: EvImageData) {
 
-        val bundle = Bundle()
-        bundle.putBoolean(MapFragment.KEY_IS_REFRESH, true)
-        bundle.putSerializable(MapFragment.KEY_IMAGE_DATA, target)
+//        val bundle = Bundle()
+//        bundle.putBoolean(MapFragment.KEY_IS_REFRESH, true)
+//        bundle.putSerializable(MapFragment.KEY_IMAGE_DATA, target)
+//
+//        val mapFragment = MapFragment().apply{
+//            arguments = bundle
+//        }
+//
+//        val transaction =  supportFragmentManager.beginTransaction()
+//        transaction.replace(R.id.nav_host_fragment, mapFragment)
+//        transaction.commit()
 
-        val mapFragment = MapFragment().apply{
-            arguments = bundle
-        }
-
-        val transaction =  supportFragmentManager.beginTransaction()
-        transaction.replace(R.id.nav_host_fragment, mapFragment)
-        transaction.commit()
+        //MapFragment.reStartFromGallery(this, true, target)
 
     }
 

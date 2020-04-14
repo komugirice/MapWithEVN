@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProviders
 import com.komugirice.mapapp.EvImageData
 import com.komugirice.mapapp.R
 import com.komugirice.mapapp.databinding.FragmentGalleryBinding
+import com.komugirice.mapapp.ui.map.MapFragment
 import kotlinx.android.synthetic.main.fragment_gallery.*
 
 class GalleryFragment : Fragment() {
@@ -45,7 +46,10 @@ class GalleryFragment : Fragment() {
 
         // initFriendView
         binding.galleryView.customAdapter.onClickCallBack = {
-            mCallback.onImageSelected(it)
+            MapFragment.isRefresh = true
+            MapFragment.refreshEvImageData = it
+            this.parentFragmentManager.popBackStack()
+//            mCallback.onImageSelected(it)
         }
         
         viewModel = ViewModelProviders.of(this).get(GalleryViewModel::class.java).apply {
