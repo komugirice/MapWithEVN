@@ -89,7 +89,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
 
     private lateinit var mMap: GoogleMap
 
-    // アプリ内保存
+    // アプリ内保存でのみ使用
     private var images = mutableListOf<ImageData>()
     // Evernote保存
     private var currentEvNotebook = EvNotebook()
@@ -704,6 +704,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
 
             }
             withContext(Dispatchers.Main) {
+                mMap.setInfoWindowAdapter(SpotInfoWindowAdapter(activity, imageMarkers.map { (it.tag as EvImageData).id }))
                 if (isRefresh)
                     refreshData()
             }
