@@ -38,6 +38,8 @@ import com.google.gson.Gson
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.mode
+import com.komugirice.mapapp.base.BaseActivity
+import com.komugirice.mapapp.base.BaseFragment
 import com.komugirice.mapapp.databinding.ImageViewDialogBinding
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode
@@ -81,7 +83,7 @@ import java.io.File
  * isExistEvNotebook
  *
  */
-class MapFragment : Fragment(), OnMapReadyCallback {
+class MapFragment : BaseFragment(), OnMapReadyCallback {
 
     private lateinit var viewModel: MapFragmentViewModel
 
@@ -141,6 +143,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         arguments?.apply {
             isRefresh = getBoolean(KEY_IS_REFRESH)
+            if(isRefresh) context?.apply{showProgressDialog(this)}
             refreshEvImageData = getSerializable(KEY_IMAGE_DATA) as EvImageData
         }
 
@@ -631,6 +634,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             )
 
         }
+        dismissProgressDialog()
     }
 
     /**

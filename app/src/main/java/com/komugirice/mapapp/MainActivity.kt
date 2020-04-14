@@ -23,6 +23,7 @@ import com.komugirice.mapapp.MyApplication.Companion.evernoteUser
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
 import com.komugirice.mapapp.MyApplication.Companion.mode
 import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
+import com.komugirice.mapapp.base.BaseActivity
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.interfaces.Update
 import com.komugirice.mapapp.task.FindNotebooksTask
@@ -36,7 +37,7 @@ import net.vrallev.android.task.TaskResult
 /**
  * @author komugirice
  */
-class MainActivity : AppCompatActivity(),
+class MainActivity : BaseActivity(),
     EvernoteLoginFragment.ResultCallback, GalleryFragment.OnImageSelectedListener{
 
     // drawer
@@ -141,6 +142,9 @@ class MainActivity : AppCompatActivity(),
         }
     }
 
+    /**
+     * GalleryFragmentのonClickCallBackで呼び出し
+     */
     override fun onImageSelected(target: EvImageData) {
 
         val bundle = Bundle()
