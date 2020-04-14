@@ -164,6 +164,13 @@ class MainActivity : BaseActivity(),
 
     }
 
+    override fun onBackPressed() {
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
+        val fragment = navHostFragment?.childFragmentManager?.getFragments()?.first()
+        if(fragment !is MapFragment)
+            super.onBackPressed()
+    }
+
     companion object {
         fun start(activity: AppCompatActivity) = activity.apply {
             //finishAffinity()

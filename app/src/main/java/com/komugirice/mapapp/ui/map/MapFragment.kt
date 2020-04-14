@@ -14,7 +14,6 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.afollestad.materialdialogs.MaterialDialog
@@ -34,11 +33,9 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.gson.Gson
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.mode
-import com.komugirice.mapapp.base.BaseActivity
 import com.komugirice.mapapp.base.BaseFragment
 import com.komugirice.mapapp.databinding.ImageViewDialogBinding
 import com.komugirice.mapapp.enums.Mode
@@ -439,7 +436,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback {
 
     private fun initGoogleMap() {
         mMap.apply {
-            setInfoWindowAdapter(SpotInfoWindowAdapter(activity, images.map { it.id }))
+//            setInfoWindowAdapter(SpotInfoWindowAdapter(activity, images.map { it.id }))
 //            val latLngBoundsBuilder = LatLngBounds.Builder()
 //            latLngBoundsBuilder.include(LatLng(TOKYO_LAT, TOKYO_LON))
 //            latLngBoundsBuilder.include(LatLng(OSAKA_LAT, OSAKA_LON))
@@ -583,6 +580,8 @@ class MapFragment : BaseFragment(), OnMapReadyCallback {
         if (mode == Mode.CACHE) {
             images.clear()
             images.addAll(Prefs().allImage.get().blockingSingle().allImage)
+            mMap.setInfoWindowAdapter(SpotInfoWindowAdapter(activity, images.map { it.id }))
+
             images.forEach {
                 var marker = mMap.addMarker(
                     MarkerOptions().position(LatLng(it.lat, it.lon))
@@ -635,6 +634,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback {
 
         }
         dismissProgressDialog()
+        isRefresh = false
     }
 
     /**
