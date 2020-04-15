@@ -6,10 +6,12 @@
     <item android:title="Menu">
         <menu>
 
+<!--
             <item
                 android:id="@+id/nav_map"
                 android:icon="@drawable/ic_menu_map"
                 android:title="@string/menu_map" />
+-->
 
             <item
                 android:id="@+id/nav_preference"
