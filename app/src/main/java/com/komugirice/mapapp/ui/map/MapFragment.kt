@@ -46,14 +46,10 @@ import com.komugirice.mapapp.extension.makeTempFile
 import com.komugirice.mapapp.extension.makeTempFileToStorage
 import com.komugirice.mapapp.interfaces.Update
 import com.komugirice.mapapp.task.FindNotesTask
-import com.komugirice.mapapp.ui.gallery.GalleryViewModel
 import com.komugirice.mapapp.util.AppUtil
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.fragment_gallery.*
 import kotlinx.android.synthetic.main.fragment_map.*
-import kotlinx.android.synthetic.main.fragment_map.galleryView
-import kotlinx.android.synthetic.main.fragment_map.swipeRefreshLayout
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -129,6 +125,15 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
 
         val root = inflater.inflate(R.layout.fragment_map, container, false)
 
+        viewModel = ViewModelProviders.of(this).get(MapFragmentViewModel::class.java).apply {
+            context = context
+            items.observe(viewLifecycleOwner, Observer {
+                galleryView.customAdapter.refresh(it)
+                swipeRefreshLayout.isRefreshing = false
+            })
+        }
+
+        // 位置変更モード
         isPosChangeMode.observe(viewLifecycleOwner, Observer {
             if (it) {
                 isPosChangeModeGroup.visibility = View.VISIBLE
@@ -138,14 +143,6 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
                 buttonGroup.visibility = View.VISIBLE
             }
         })
-
-        viewModel = ViewModelProviders.of(this).get(MapFragmentViewModel::class.java).apply {
-            context = context
-            items.observe(viewLifecycleOwner, Observer {
-                galleryView.customAdapter.refresh(it)
-                swipeRefreshLayout.isRefreshing = false
-            })
-        }
 
         return root
 
@@ -173,6 +170,12 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
             swipeRefreshLayout.isRefreshing = false
         }
 
+        // 一覧から画像選択
+        galleryView.customAdapter.onClickCallBack = {
+            refreshEvImageData = it
+            refreshData()
+        }
+
         initClick()
     }
 
@@ -188,17 +191,21 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
 
     private fun initClick() {
 
-        // ギャラリーボタンクリック時
+        // 一覧ボタンクリック時
         galleryButton.setOnClickListener {
-            if (swipeRefreshLayout.visibility == View.GONE) {
-                swipeRefreshLayout.visibility = View.VISIBLE
+            if (galleryGroup.visibility == View.GONE) {
+                galleryGroup.visibility = View.VISIBLE
                 buttonGroup.visibility = View.GONE
                 viewModel.initData()
-            } else {
-                swipeRefreshLayout.visibility = View.GONE
-                buttonGroup.visibility = View.VISIBLE
             }
         }
+
+        // 一覧の閉じるボタンクリック時
+        closeGallery.setOnClickListener{
+            galleryGroup.visibility = View.GONE
+            buttonGroup.visibility = View.VISIBLE
+        }
+
         // 写真ボタンクリック時
         photoButton.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
