@@ -11,8 +11,10 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.core.os.postDelayed
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import androidx.navigation.findNavController
 import com.evernote.client.android.EvernoteSession
 import com.evernote.client.android.login.EvernoteLoginFragment
 import com.evernote.edam.type.User
@@ -26,6 +28,7 @@ import com.komugirice.mapapp.task.GetUserTask
 import com.komugirice.mapapp.ui.map.MapFragment
 import com.komugirice.mapapp.ui.notebook.NotebookNameActivity
 import kotlinx.android.synthetic.main.activity_header.*
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_preference.*
 import net.vrallev.android.task.TaskResult
 
@@ -48,15 +51,15 @@ class PreferenceFragment: Fragment() {
         preferenceViewModel =
             ViewModelProviders.of(this).get(PreferenceViewModel::class.java).apply {
                 // モード
-                mode.observe(this@PreferenceFragment, Observer {
+                mode.observe(viewLifecycleOwner, Observer {
                     modeValue.setSelection(it.id)
                 })
                 // Evernote連携
-                evernoteName.observe(this@PreferenceFragment, Observer {
+                evernoteName.observe(viewLifecycleOwner, Observer {
                     evernoteValue.text = it
                 })
                 // ノートブック
-                notebookName.observe(this@PreferenceFragment, Observer {
+                notebookName.observe(viewLifecycleOwner, Observer {
                     notebookValue.text = it
                 })
             }
@@ -74,6 +77,9 @@ class PreferenceFragment: Fragment() {
 
     override fun onResume() {
         super.onResume()
+
+        // ナビゲーションからギャラリーを非活性
+        activity?.nav_view?.getMenu()?.findItem(R.id.nav_gallery)?.setEnabled(false)
 
         // evernote連携再設定
         isEvernoteLoggedIn = EvernoteSession.getInstance().isLoggedIn

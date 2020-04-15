@@ -47,6 +47,7 @@ import com.komugirice.mapapp.interfaces.Update
 import com.komugirice.mapapp.task.FindNotesTask
 import com.komugirice.mapapp.util.AppUtil
 import com.squareup.picasso.Picasso
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_map.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
@@ -159,6 +160,10 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
 
     override fun onResume() {
         super.onResume()
+
+        // ナビゲーションからギャラリーを非活性
+        activity?.nav_view?.getMenu()?.findItem(R.id.nav_gallery)?.setEnabled(true)
+
 //        if(::mMap.isInitialized)
 //            initData()
     }

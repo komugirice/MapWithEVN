@@ -13,6 +13,7 @@ import com.komugirice.mapapp.EvImageData
 import com.komugirice.mapapp.R
 import com.komugirice.mapapp.databinding.FragmentGalleryBinding
 import com.komugirice.mapapp.ui.map.MapFragment
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_gallery.*
 
 class GalleryFragment : Fragment() {
@@ -61,10 +62,14 @@ class GalleryFragment : Fragment() {
                 }
             })
         }
-
-
-
         return binding.root
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        // ナビゲーションからギャラリーを非活性
+        activity?.nav_view?.getMenu()?.findItem(R.id.nav_gallery)?.setEnabled(true)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
