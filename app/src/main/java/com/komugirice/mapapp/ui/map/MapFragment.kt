@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.list.listItems
 import com.evernote.client.android.type.NoteRef
@@ -45,10 +46,14 @@ import com.komugirice.mapapp.extension.makeTempFile
 import com.komugirice.mapapp.extension.makeTempFileToStorage
 import com.komugirice.mapapp.interfaces.Update
 import com.komugirice.mapapp.task.FindNotesTask
+import com.komugirice.mapapp.ui.gallery.GalleryViewModel
 import com.komugirice.mapapp.util.AppUtil
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.fragment_gallery.*
 import kotlinx.android.synthetic.main.fragment_map.*
+import kotlinx.android.synthetic.main.fragment_map.galleryView
+import kotlinx.android.synthetic.main.fragment_map.swipeRefreshLayout
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -109,6 +114,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
     private var isPosChangeMode = MutableLiveData<Boolean>(false)
     private var posChangeMarker: Marker? = null
 
+
 //    private var isRefresh = false
 //    private var refreshEvImageData: EvImageData? = null
 
@@ -133,6 +139,14 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
             }
         })
 
+        viewModel = ViewModelProviders.of(this).get(MapFragmentViewModel::class.java).apply {
+            context = context
+            items.observe(viewLifecycleOwner, Observer {
+                galleryView.customAdapter.refresh(it)
+                swipeRefreshLayout.isRefreshing = false
+            })
+        }
+
         return root
 
     }
@@ -152,9 +166,13 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
         mapFragment?.apply {
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(context!!)
             getMapAsync(this@MapFragment)
-
-
         }
+
+        swipeRefreshLayout.setOnRefreshListener {
+            viewModel.initData()
+            swipeRefreshLayout.isRefreshing = false
+        }
+
         initClick()
     }
 
@@ -170,6 +188,17 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
 
     private fun initClick() {
 
+        // ギャラリーボタンクリック時
+        galleryButton.setOnClickListener {
+            if (swipeRefreshLayout.visibility == View.GONE) {
+                swipeRefreshLayout.visibility = View.VISIBLE
+                buttonGroup.visibility = View.GONE
+                viewModel.initData()
+            } else {
+                swipeRefreshLayout.visibility = View.GONE
+                buttonGroup.visibility = View.VISIBLE
+            }
+        }
         // 写真ボタンクリック時
         photoButton.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
