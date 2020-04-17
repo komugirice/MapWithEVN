@@ -461,7 +461,7 @@ fun String.extractPostalCodeAndAllAddress(): String {
 }
 
 /**
- * 文字列から郵便番号と住所を抽出する
+ * 文字列から郵便番号と住所を抽出する（Evernoteのノート名にのみ使用している）
  * (Geocoder.getFromLocation.get(0).getAddressLine(0)のみ対応)
  * @return 郵便番号 + 住所(半角スペースまで)
  */

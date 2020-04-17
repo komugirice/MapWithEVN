@@ -1,8 +1,6 @@
 package com.komugirice.mapapp.ui.map
 
-import android.content.Context
 import android.graphics.BitmapFactory
-import android.location.Geocoder
 import android.os.Environment
 import com.evernote.client.android.EvernoteUtil
 import com.evernote.client.conn.mobile.FileData
@@ -16,8 +14,9 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
-import com.komugirice.mapapp.extension.extractPostalCodeAndAllAddress
-import com.komugirice.mapapp.extension.extractPostalCodeAndHalfAddress
+import com.komugirice.mapapp.data.AllImage
+import com.komugirice.mapapp.data.EvImageData
+import com.komugirice.mapapp.data.ImageData
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream

@@ -2,7 +2,6 @@ package com.komugirice.mapapp.extension
 
 import android.widget.ImageView
 import androidx.databinding.BindingAdapter
-import com.komugirice.mapapp.EvImageData
 import com.squareup.picasso.Picasso
 
 /**

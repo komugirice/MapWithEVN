@@ -5,9 +5,13 @@ import android.view.LayoutInflater
 import android.view.View
 import com.komugirice.mapapp.databinding.InfoWindowLayoutBinding
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
+import com.komugirice.mapapp.MyApplication.Companion.applicationContext
+import com.komugirice.mapapp.data.ImageData
 import com.komugirice.mapapp.databinding.InfoTitleWindowLayoutBinding
 import com.komugirice.mapapp.extension.visible
+import com.komugirice.mapapp.util.AppUtil
 import com.squareup.picasso.Picasso
 
 /**
@@ -36,13 +40,16 @@ class SpotInfoWindowAdapter(private val activity: Activity?, spotIds: List<Long>
     override fun getInfoWindow(tempMarker: Marker?): View? {
         val marker = tempMarker ?: return View(activity)
         var spot = marker.tag as? ImageData ?: return View(activity)
-        // TODO 画像のマーカーと設置位置のマーカーの仕分けが必要
+        // 画像のマーカーと設置位置のマーカーの処理分け
         if(spot.filePath.isNotEmpty()) {
             if (imageLoadedMap[spot.id] == true) {
                 infoWindowLayoutBinding.apply {
                     progressImageView.visible(false)
+                    // 住所表示
+                    addressTextView.text = AppUtil.getPostalCodeAndAllAddress(applicationContext, LatLng(spot.lat, spot.lon))
                 }
                 Picasso.get().load(spot.filePath).into(infoWindowLayoutBinding.spotImageView)
+
             } else {
                 imageLoadedMap[spot.id] = true
                 infoWindowLayoutBinding.apply {

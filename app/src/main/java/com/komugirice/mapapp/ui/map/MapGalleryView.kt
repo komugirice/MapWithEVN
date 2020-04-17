@@ -6,9 +6,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.komugirice.mapapp.EvImageData
-import com.komugirice.mapapp.ImageData
-import com.komugirice.mapapp.databinding.ImageCellBinding
+import com.komugirice.mapapp.data.EvImageData
 import com.komugirice.mapapp.databinding.ImageMapGalleryCellBinding
 import com.komugirice.mapapp.extension.eliminatePostalCode
 import com.komugirice.mapapp.extension.extractPostalCode

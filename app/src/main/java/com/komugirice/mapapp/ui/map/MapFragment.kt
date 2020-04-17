@@ -38,6 +38,9 @@ import com.komugirice.mapapp.*
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.mode
 import com.komugirice.mapapp.base.BaseFragment
+import com.komugirice.mapapp.data.AllImage
+import com.komugirice.mapapp.data.EvImageData
+import com.komugirice.mapapp.data.ImageData
 import com.komugirice.mapapp.databinding.ImageViewDialogBinding
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode
@@ -320,7 +323,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
                     helper.updateNoteEvResource(this, evResource.resource)
                 } ?: run {
                     // 存在しない場合は新規作成
-                    val title = evResource.title.extractPostalCodeAndHalfAddress()
+                    val title = evResource.title.extractPostalCodeAndHalfAddress()  // Evernoteノートタイトル
                     helper.createNote(evNotebook?.guid, title, evResource.resource)
                     isCreate = true
                 }
@@ -364,7 +367,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
 
             // 位置情報設定
             var latLng: LatLng = focusPosition()
-            val address = AppUtil.getPostalCodeAndHalfAddress(context, latLng)
+            val address = AppUtil.getPostalCodeAndAllAddress(context, latLng)
 
             if (mode == Mode.CACHE) {
                 // キャッシュ

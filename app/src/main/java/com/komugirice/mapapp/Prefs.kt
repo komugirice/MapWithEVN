@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import com.komugirice.mapapp.MyApplication.Companion.applicationContext
 import com.google.gson.Gson
+import com.komugirice.mapapp.data.AllImage
 import io.reactivex.Observable
 import timber.log.Timber
 

@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.android.gms.maps.model.LatLng
-import com.komugirice.mapapp.EvImageData
-import com.komugirice.mapapp.ImageData
+import com.komugirice.mapapp.data.EvImageData
+import com.komugirice.mapapp.data.ImageData
 import com.komugirice.mapapp.MyApplication
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode

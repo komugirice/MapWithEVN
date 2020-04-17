@@ -1,4 +1,4 @@
-package com.komugirice.mapapp
+package com.komugirice.mapapp.data
 
 import java.io.Serializable
 

@@ -8,10 +8,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.replace
-import androidx.navigation.NavGraph
 import androidx.navigation.findNavController
-import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.evernote.client.android.EvernoteSession
@@ -21,17 +18,14 @@ import com.evernote.edam.type.User
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.evernoteUser
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
-import com.komugirice.mapapp.MyApplication.Companion.mode
 import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
 import com.komugirice.mapapp.base.BaseActivity
-import com.komugirice.mapapp.enums.Mode
-import com.komugirice.mapapp.interfaces.Update
+import com.komugirice.mapapp.data.EvImageData
 import com.komugirice.mapapp.task.FindNotebooksTask
 import com.komugirice.mapapp.task.GetUserTask
 import com.komugirice.mapapp.ui.gallery.GalleryFragment
 import com.komugirice.mapapp.ui.map.MapFragment
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.fragment_map.*
 import net.vrallev.android.task.TaskResult
 
 /**
