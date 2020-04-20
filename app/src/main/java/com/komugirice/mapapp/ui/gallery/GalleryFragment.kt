@@ -77,8 +77,9 @@ class GalleryFragment : Fragment() {
         activity?.nav_view?.getMenu()?.findItem(R.id.nav_gallery)?.setEnabled(true)
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         viewModel.initData()
 
         swipeRefreshLayout.setOnRefreshListener {
