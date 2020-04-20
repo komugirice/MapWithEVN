@@ -27,6 +27,11 @@
     <!-- gallery_preference -->
     <string name="lat_label">緯度：</string>
     <string name="lon_label">経度：</string>
+    <string name="sync_label">画像データを同期</string>
+    <string name="sync_cache_to_ev_label">アプリ内キャッシュ → Evernote</string>
+    <string name="syncev_to_cache__label">Evernote → アプリ内キャッシュ</string>
+    <string name="sync_perfect">完全に同期</string>
+    <string name="sync_difference">差分を同期</string>
 
 </resources>
 
