@@ -13,6 +13,7 @@ import com.komugirice.mapapp.data.EvImageData
 import com.komugirice.mapapp.R
 import com.komugirice.mapapp.databinding.FragmentGalleryBinding
 import com.komugirice.mapapp.ui.map.MapFragment
+import kotlinx.android.synthetic.main.activity_header.*
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_gallery.*
 
@@ -62,6 +63,10 @@ class GalleryFragment : Fragment() {
                 }
             })
         }
+
+        binding.header.backImageView.setOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
         return binding.root
     }
 
@@ -80,6 +85,8 @@ class GalleryFragment : Fragment() {
             viewModel.initData()
             swipeRefreshLayout.isRefreshing = false
         }
+
+        titleTextView.text = "ギャラリー"
     }
 
 

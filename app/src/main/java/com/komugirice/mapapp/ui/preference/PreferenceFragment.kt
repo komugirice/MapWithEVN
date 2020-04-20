@@ -130,7 +130,7 @@ class PreferenceFragment: Fragment() {
 
     private fun initClick(){
         backImageView.setOnClickListener {
-            getFragmentManager()?.popBackStack()
+            parentFragmentManager.popBackStack()
         }
         evernoteValue.setOnClickListener {
 //            if(!isEvernoteLoggedIn)
