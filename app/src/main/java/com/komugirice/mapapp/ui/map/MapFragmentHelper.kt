@@ -25,44 +25,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-object MapFragmentHelper {
-
-    /**
-     * Evernoteノート情報作成
-     */
-    fun createEvResource(imageFile: File, latLng: LatLng, title: String): MapFragment.Companion.EvResource {
-        // Hash the data in the image file. The hash is used to reference the file in the ENML note content.
-        var `in` = BufferedInputStream(FileInputStream(imageFile))
-        val data = FileData(EvernoteUtil.hash(`in`), imageFile)
-
-        val opts = BitmapFactory.Options()
-        opts.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(imageFile.absolutePath, opts)
-
-        val attributes = ResourceAttributes()
-        attributes.fileName = imageFile.name
-        attributes.longitude = latLng.longitude
-        attributes.latitude = latLng.latitude
-
-        val evResource = MapFragment.Companion.EvResource().apply {
-            // クラス変数evNote設定
-            this.title = title
-            this.filePath = imageFile.absolutePath
-
-            this.resource.apply{
-                this.data = data
-                //this.data.body = `in`.readBytes() // bodyがnullになるバグ
-                //height = opts.outHeight.toShort()
-                //width = opts.outWidth.toShort()
-                mime = "image/jpg"
-                this.attributes = attributes
-                guid = UUID.randomUUID().toString()
-                // 注意!! noteGuidは設定できない
-            }
-
-        }
-        return evResource
-    }
+object MapFragmentHelper: EvernoteHelper() {
 
     /**
      * ExternalStorageに画像ファイル作成
@@ -92,46 +55,6 @@ object MapFragmentHelper {
             ".jpg", /* suffix */
             storageDir /* directory */
         )
-    }
-
-    /**
-     * Evernoteノート更新
-     * ※同じ画像はresoucesに追加されないらしい
-     */
-    fun updateNoteEvResource(note: Note, resource: Resource?){
-
-        note.content = EvernoteUtil.NOTE_PREFIX
-        note.resources?.forEach {
-            note.content += EvernoteUtil.createEnMediaTag(it)
-        }
-        resource?.apply {
-            note.addToResources(resource)
-            note.content += EvernoteUtil.createEnMediaTag(resource)
-
-        }
-        note.content += EvernoteUtil.NOTE_SUFFIX
-
-
-        noteStoreClient?.updateNote(note)
-    }
-
-    /**
-     * Evernoteノート新規登録
-     */
-    fun createNote(notebookGuid: String?, titile: String, resource: Resource){
-        val note = Note()
-        note.title = titile
-        note.content =
-            EvernoteUtil.NOTE_PREFIX +
-//                    "<en-media type=\"" + evResource.resource.mime + "\" hash=\"" +
-//                    EvernoteUtil.bytesToHex(evResource.resource.getData().getBodyHash()) + "\"/>" +
-                    EvernoteUtil.createEnMediaTag(resource) +
-                    EvernoteUtil.NOTE_SUFFIX;
-        note.addToResources(resource)
-        notebookGuid?.apply {
-            note.notebookGuid = this
-        }
-        noteStoreClient?.createNote(note)
     }
 
     /**
@@ -229,29 +152,6 @@ object MapFragmentHelper {
         Prefs().allImage.put(AllImage().apply { allImage = images })
 
 
-    }
-
-    fun deleteEvResouce(note: Note, resourceGuid: String): Note? {
-
-        var targetResource = note?.resources?.filter{it.guid == resourceGuid}?.first()
-        note.resources.remove(targetResource)
-
-        // リソースが残っている場合
-        if(note.resources.isNotEmpty()) {
-
-            note.content = note.content.removeSuffix(EvernoteUtil.NOTE_SUFFIX)
-            note.resources.forEach {
-                note.content += "<en-media type=\"" + it.mime + "\" hash=\"" +
-                        EvernoteUtil.bytesToHex(it.getData().getBodyHash()) + "\"/>"
-            }
-            note.content += EvernoteUtil.NOTE_SUFFIX
-
-            noteStoreClient?.updateNote(note)
-        } else {
-            // リソースが残っていない場合
-            noteStoreClient?.deleteNote(note.guid)
-        }
-        return note
     }
 
 }

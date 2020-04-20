@@ -118,7 +118,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
 //    private var refreshEvImageData: EvImageData? = null
 
     private val exceptionHandler: CoroutineExceptionHandler =
-        CoroutineExceptionHandler { _, throwable -> handleEvernoteApiException(throwable) }
+        CoroutineExceptionHandler { _, throwable -> MapFragmentHelper.handleEvernoteApiException(context!!, throwable) }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -324,7 +324,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
                 } ?: run {
                     // 存在しない場合は新規作成
                     val title = evResource.title.extractPostalCodeAndHalfAddress()  // Evernoteノートタイトル
-                    helper.createNote(evNotebook?.guid, title, evResource.resource)
+                    helper.registNote(evNotebook?.guid, title, evResource.resource)
                     isCreate = true
                 }
             }.await()
@@ -824,28 +824,6 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
 
     override fun update() {
         refreshData()
-    }
-
-    /**
-     * エラーハンドリングを作成
-     */
-    private fun handleEvernoteApiException(throwable: Throwable) {
-        Log.e("CoroutineException", "例外キャッチ $throwable")
-        CoroutineScope(Main).launch {
-            var errorMsg = ""
-            var message = throwable.message ?: ""
-
-            if (throwable is EDAMUserException) {
-                if (throwable.errorCode == EDAMErrorCode.QUOTA_REACHED) {
-                    errorMsg = "Evernoteアカウントのアップロード容量の上限に達しました"
-                }
-            }
-            if (errorMsg.isEmpty())
-                errorMsg = "API実行中に予期せぬエラーが発生しました\n${throwable}"
-
-
-            Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
-        }
     }
 
     /**
