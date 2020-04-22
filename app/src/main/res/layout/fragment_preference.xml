@@ -150,7 +150,7 @@
             app:layout_constraintTop_toBottomOf="@+id/syncLabel" />
 
         <TextView
-            android:id="@+id/syncAllCacheToEv"
+            android:id="@+id/syncPerfectCacheToEv"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -172,7 +172,7 @@
             android:textColor="@android:color/black"
             android:textSize="@dimen/sp_m"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/syncAllCacheToEv"
+            app:layout_constraintStart_toEndOf="@+id/syncPerfectCacheToEv"
             app:layout_constraintTop_toBottomOf="@+id/syncCacheToEvLabel" />
 
 
@@ -184,7 +184,7 @@
             android:background="@color/gainsboro"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/syncAllCacheToEv" />
+            app:layout_constraintTop_toBottomOf="@+id/syncPerfectCacheToEv" />
 
         <TextView
             android:id="@+id/syncEvToCacheLabel"
@@ -200,7 +200,7 @@
             app:layout_constraintTop_toBottomOf="@+id/syncCacheToEvLine" />
 
         <TextView
-            android:id="@+id/syncAllEvToCache"
+            android:id="@+id/syncPerfectEvToCache"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -222,7 +222,7 @@
             android:textColor="@android:color/black"
             android:textSize="@dimen/sp_m"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/syncAllEvToCache"
+            app:layout_constraintStart_toEndOf="@+id/syncPerfectEvToCache"
             app:layout_constraintTop_toBottomOf="@+id/syncEvToCacheLabel" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
