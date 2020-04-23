@@ -44,7 +44,7 @@ import java.io.File
 /**
  * @author komugirice
  */
-class PreferenceFragment: Fragment() {
+class PreferenceFragment : Fragment() {
 
     private lateinit var preferenceViewModel: PreferenceViewModel
 
@@ -53,7 +53,12 @@ class PreferenceFragment: Fragment() {
     private val EvernoteHelper = EvernoteHelper()
 
     private val exceptionHandler: CoroutineExceptionHandler =
-        CoroutineExceptionHandler { _, throwable -> EvernoteHelper.handleEvernoteApiException(context!!, throwable) }
+        CoroutineExceptionHandler { _, throwable ->
+            EvernoteHelper.handleEvernoteApiException(
+                context!!,
+                throwable
+            )
+        }
 
 
     override fun onCreateView(
@@ -97,7 +102,7 @@ class PreferenceFragment: Fragment() {
 
         // evernote連携再設定
         isEvernoteLoggedIn = EvernoteSession.getInstance().isLoggedIn
-        if(isEvernoteLoggedIn){
+        if (isEvernoteLoggedIn) {
             handler.postDelayed({
                 GetUserTask().start(this, "init")
             }, 100L)
@@ -107,9 +112,9 @@ class PreferenceFragment: Fragment() {
         preferenceViewModel.initData()
     }
 
-    private fun initSpinner(){
+    private fun initSpinner() {
         var adapter: ArrayAdapter<String>
-        var modeList = Mode.values().map {it.modeName}
+        var modeList = Mode.values().map { it.modeName }
         context?.apply {
             adapter = ArrayAdapter<String>(
                 this, R.layout.spinner_item, modeList
@@ -140,24 +145,31 @@ class PreferenceFragment: Fragment() {
         }
     }
 
-    private fun initClick(){
+    private fun initClick() {
         backImageView.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
         evernoteValue.setOnClickListener {
-//            if(!isEvernoteLoggedIn)
-                EvernoteSession.getInstance().authenticate(this.requireActivity())
+            //            if(!isEvernoteLoggedIn)
+            EvernoteSession.getInstance().authenticate(this.requireActivity())
         }
         notebookValue.setOnClickListener {
             NotebookNameActivity.start(this.activity)
         }
+
         // アプリ内キャッシュ → Evernote 完全に同期
         syncPerfectCacheToEv.setOnClickListener {
-            syncPerfectCacheToEv()
+            MyApplication.evNotebook?.apply {
+                // ノート検索タスク実行
+                FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
+                    this@PreferenceFragment,
+                    "onSyncPerfectCacheToEv"
+                )
+            }
         }
+
         // アプリ内キャッシュ → Evernote 差分を同期
         syncDiffCacheToEv.setOnClickListener {
-            // 全てのノートを取得
             MyApplication.evNotebook?.apply {
                 // ノート検索タスク実行
                 FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
@@ -177,8 +189,8 @@ class PreferenceFragment: Fragment() {
     }
 
     fun getModeName(mode: Mode): String {
-        if(mode.isCache) return getString(R.string.mode_cache)
-        if(mode.isEvernote) return getString(R.string.mode_evernote)
+        if (mode.isCache) return getString(R.string.mode_cache)
+        if (mode.isEvernote) return getString(R.string.mode_evernote)
         return ""
     }
 
@@ -204,107 +216,117 @@ class PreferenceFragment: Fragment() {
     /**
      * アプリ内キャッシュ → Evernote 完全に同期
      */
-    private fun syncPerfectCacheToEv() {
+    @TaskResult(id = "onSyncPerfectCacheToEv")
+    fun syncPerfectCacheToEv(noteRefList: List<NoteRef>?) {
 
-        // ノートブックを全削除
-
-        // キャッシュの画像を取得
-        val images = mutableListOf<ImageData>()
-        images.addAll(Prefs().allImage.get().blockingSingle().allImage)
-
-        // Evernoteリソース作成
-        val resources = mutableListOf<MapFragment.Companion.EvResource>()
-        images.forEach {
-            val resource = EvernoteHelper.createEvResource(File(it.filePath), LatLng(it.lat, it.lon), it.address)
-            resources.add(resource)
+        CoroutineScope(Dispatchers.IO).launch(exceptionHandler) {
+            async {
+                noteRefList?.forEach {
+                    // ノート全削除
+                    MyApplication.noteStoreClient?.deleteNote(it.guid)
+                }
+            }.await()
+            withContext(Dispatchers.Main) {
+                // アプリ内キャッシュ → Evernoteノート同期
+                syncCacheToEv(null)
+            }
         }
-
-        // ノート新規作成
-
-        // ノート登録
     }
 
     /**
      * アプリ内キャッシュ → Evernote 差分を同期
      */
     @TaskResult(id = "onSyncDiffCacheToEv")
-    fun syncDiffCacheToEv(noteRefList: List<NoteRef>?) {
+    fun syncDiffCacheToEvTask(noteRefList: List<NoteRef>?) {
         var gottenEvNotebook = MapFragment.Companion.EvNotebook()
-        var updateNotes = mutableListOf<Note>()
-        var newNotes = mutableListOf<Note>()
 
         CoroutineScope(Dispatchers.IO).launch(exceptionHandler) {
             async {
                 noteRefList?.forEach {
                     // ノート取得
                     val note = it.loadNote(true, true, false, false)
-
                     gottenEvNotebook.notes.add(note)
-
                 }
             }.await()
             withContext(Dispatchers.Main) {
-                // アプリ内キャッシュの画像を取得
-                val images = mutableListOf<ImageData>()
-                images.addAll(Prefs().allImage.get().blockingSingle().allImage)
+                // アプリ内キャッシュ → Evernoteノート同期
+                syncCacheToEv(gottenEvNotebook)
+            }
+        }
+    }
 
-                // アプリ内キャッシュ → Evernoteリソースへ変換
-                val resources = mutableListOf<MapFragment.Companion.EvResource>()
-                images.forEach {
-                    var imageFile = it.filePath.toUri().makeTempFile()
-                    imageFile?.apply {
-                        val resource = EvernoteHelper.createEvResource(
-                            imageFile,
-                            LatLng(it.lat, it.lon),
-                            it.address
-                        )
-                        resources.add(resource)
-                    }
+    /**
+     * アプリ内キャッシュ → Evernoteノート同期
+     * 完全同期の場合・・・noteBookはnullが入る。
+     * 差分同期の場合・・・noteBookは値が設定される。
+     */
+    private fun syncCacheToEv(noteBook: MapFragment.Companion.EvNotebook?) {
+        var updateNotes = mutableListOf<Note>()
+        var newNotes = mutableListOf<Note>()
+
+        // アプリ内キャッシュの画像を取得
+        val images = mutableListOf<ImageData>()
+        images.addAll(Prefs().allImage.get().blockingSingle().allImage)
+
+        // アプリ内キャッシュ → Evernoteリソースへ変換
+        val resources = mutableListOf<MapFragment.Companion.EvResource>()
+        images.forEach {
+            var imageFile = it.filePath.toUri().makeTempFile()
+            imageFile?.apply {
+                val resource = EvernoteHelper.createEvResource(
+                    imageFile,
+                    LatLng(it.lat, it.lon),
+                    it.address
+                )
+                resources.add(resource)
+            }
+        }
+
+        // ノートに追加する処理
+        resources.forEach {
+            val lat = it.resource.attributes.latitude
+            val lon = it.resource.attributes.longitude
+            // resourceからノートタイトルを設定
+            val noteTitle = AppUtil.getPostalCodeAndHalfAddress(context, LatLng(lat, lon))
+            // 郵便番号チェック
+            val targetNote =
+                noteBook?.notes?.filter { it.title.extractPostalCode() == noteTitle.extractPostalCode() }
+                    ?.firstOrNull()
+            // ノートありの場合
+            targetNote?.apply {
+
+                // lat, lonが完全に一致している場合は対象外
+                val isDuplicate =
+                    targetNote.resources.find { it.attributes.latitude == lat && it.attributes.longitude == lon }
+                if (isDuplicate == null) {
+                    // ノートにリソースを追加
+                    targetNote.addToResources(it.resource)
+                    // updateNotesにまだ未追加の場合は追加する
+                    if (!updateNotes.contains(targetNote))
+                        updateNotes.add(targetNote)
                 }
 
-                // ノートに追加する処理
-                resources.forEach {
-                    val lat = it.resource.attributes.latitude
-                    val lon = it.resource.attributes.longitude
-                    // resourceからノートタイトルを設定
-                    val noteTitle = AppUtil.getPostalCodeAndHalfAddress(context, LatLng(lat, lon))
-                    // 郵便番号チェック
-                    val targetNote =
-                        gottenEvNotebook.notes.filter { it.title.extractPostalCode() == noteTitle.extractPostalCode() }.firstOrNull()
-                    // ノートありの場合
-                    targetNote?.apply {
-
-                        // TODO 画像が同じ郵便番号の場合の分岐
-
-                        // lat, lonが完全に一致している場合は対象外
-                        val isDuplicate =
-                            targetNote.resources.find { it.attributes.latitude == lat && it.attributes.longitude == lon }
-                        if (isDuplicate == null) {
-                            // ノートにリソースを追加
-                            targetNote.addToResources(it.resource)
-                            // updateNotesにまだ未追加の場合は追加する
-                            if(!updateNotes.contains(targetNote))
-                                updateNotes.add(targetNote)
-                        }
-
-                    } ?: run {
-                        // ノートなし
-                        val tmpNote = newNotes.filter{ it.title.extractPostalCode() == noteTitle.extractPostalCode() }.firstOrNull()
-                        if(tmpNote == null){
-                            // 新規ノート初作成
-                            val newNote = EvernoteHelper.createNote(
-                                MyApplication.evNotebook?.guid,
-                                noteTitle,
-                                it.resource
-                            )
-                            newNotes.add(newNote)
-                        } else {
-                            // 既に新規ノート作成済み
-                            EvernoteHelper.addResource(tmpNote, it.resource)
-                        }
-                    }
+            } ?: run {
+                // ノートなし
+                val tmpNote =
+                    newNotes.filter { it.title.extractPostalCode() == noteTitle.extractPostalCode() }
+                        .firstOrNull()
+                if (tmpNote == null) {
+                    // 新規ノート初作成
+                    val newNote = EvernoteHelper.createNote(
+                        MyApplication.evNotebook?.guid,
+                        noteTitle,
+                        it.resource
+                    )
+                    newNotes.add(newNote)
+                } else {
+                    // 既に新規ノート作成済み
+                    EvernoteHelper.addResource(tmpNote, it.resource)
                 }
             }
+        }
+
+        CoroutineScope(Dispatchers.IO).launch(exceptionHandler) {
 
             // ノート登録
             newNotes.forEach {
