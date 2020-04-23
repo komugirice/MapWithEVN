@@ -22,6 +22,8 @@ import com.komugirice.mapapp.MyApplication
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
 import com.komugirice.mapapp.Prefs
 import com.komugirice.mapapp.R
+import com.komugirice.mapapp.data.AllImage
+import com.komugirice.mapapp.data.EvImageData
 import com.komugirice.mapapp.data.ImageData
 import com.komugirice.mapapp.enums.Mode
 import com.komugirice.mapapp.extension.extractPostalCode
@@ -31,6 +33,7 @@ import com.komugirice.mapapp.task.FindNotesTask
 import com.komugirice.mapapp.task.GetUserTask
 import com.komugirice.mapapp.ui.map.EvernoteHelper
 import com.komugirice.mapapp.ui.map.MapFragment
+import com.komugirice.mapapp.ui.map.MapFragmentHelper
 import com.komugirice.mapapp.ui.notebook.NotebookNameActivity
 import com.komugirice.mapapp.util.AppUtil
 import kotlinx.android.synthetic.main.activity_header.*
@@ -39,6 +42,7 @@ import kotlinx.android.synthetic.main.fragment_preference.*
 import kotlinx.coroutines.*
 import net.vrallev.android.task.TaskResult
 import java.io.File
+import java.io.IOException
 
 
 /**
@@ -180,18 +184,32 @@ class PreferenceFragment : Fragment() {
         }
         // Evernote → アプリ内キャッシュ 完全に同期
         syncPerfectEvToCache.setOnClickListener {
+            MyApplication.evNotebook?.apply {
+                // アプリ内キャッシュ消去
+                val images = mutableListOf<ImageData>()
+                images.addAll(Prefs().allImage.get().blockingSingle().allImage)
+                images.forEach{
+                    File(it.filePath).delete()
+                }
+                Prefs().allImage.remove()
 
+                // ノート検索タスク実行
+                FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
+                    this@PreferenceFragment,
+                    "onSyncDiffEvToCache"
+                )
+            }
         }
         // Evernote → アプリ内キャッシュ 差分を同期
         syncDiffEvToCache.setOnClickListener {
-
+            MyApplication.evNotebook?.apply {
+                // ノート検索タスク実行
+                FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
+                    this@PreferenceFragment,
+                    "onSyncDiffEvToCache"
+                )
+            }
         }
-    }
-
-    fun getModeName(mode: Mode): String {
-        if (mode.isCache) return getString(R.string.mode_cache)
-        if (mode.isEvernote) return getString(R.string.mode_evernote)
-        return ""
     }
 
     @TaskResult(id = "init")
@@ -237,7 +255,7 @@ class PreferenceFragment : Fragment() {
      * アプリ内キャッシュ → Evernote 差分を同期
      */
     @TaskResult(id = "onSyncDiffCacheToEv")
-    fun syncDiffCacheToEvTask(noteRefList: List<NoteRef>?) {
+    fun syncDiffCacheToEv(noteRefList: List<NoteRef>?) {
         var gottenEvNotebook = MapFragment.Companion.EvNotebook()
 
         CoroutineScope(Dispatchers.IO).launch(exceptionHandler) {
@@ -336,5 +354,79 @@ class PreferenceFragment : Fragment() {
                 MyApplication.noteStoreClient?.updateNote(it)
             }
         }
+    }
+
+    /**
+     * Evernote → アプリ内キャッシュ 差分を同期
+     */
+    @TaskResult(id = "onSyncDiffEvToCache")
+    fun syncDiffEvToCache(noteRefList: List<NoteRef>?) {
+        var gottenEvNotebook = MapFragment.Companion.EvNotebook()
+
+        CoroutineScope(Dispatchers.IO).launch(exceptionHandler) {
+            async {
+                noteRefList?.forEach {
+                    // ノート取得
+                    val note = it.loadNote(true, true, false, false)
+                    gottenEvNotebook.notes.add(note)
+                }
+            }.await()
+            withContext(Dispatchers.Main) {
+                // Evernote → アプリ内キャッシュ 同期
+                syncEvToCache(gottenEvNotebook)
+            }
+        }
+    }
+
+    /**
+     * Evernote → アプリ内キャッシュ 同期
+     *
+     */
+    private fun syncEvToCache(noteBook: MapFragment.Companion.EvNotebook) {
+
+        // 登録済みのアプリ内キャッシュの画像を取得
+        val images = mutableListOf<ImageData>()
+        images.addAll(Prefs().allImage.get().blockingSingle().allImage)
+
+        // Evernoteリソース→imageDataリストへ詰め込む
+        val tmp = mutableListOf<ImageData>()
+        noteBook.notes.forEach {
+            it.resources.forEach { resource->
+
+                // 同じ座標の場合は登録しない
+                if(images.any{it.lat == resource.attributes.latitude
+                        && it.lon == resource.attributes.longitude})
+                    return@forEach
+
+                // アプリ内キャッシュ用の画像ファイル作成
+                val newFile: File? = try {
+                    AppUtil.createImageFileToStorage()
+                } catch (ex: IOException) {
+                    // Error occurred while creating the File
+                    null
+                }
+                newFile?.apply {
+
+                    try {
+                        // 画像ファイルにevernote取得データをコピー
+                        writeBytes(resource.data.body)
+                    } catch (e: Exception) {
+                        // resource.data.bodyがnullでexceptionの時がある
+                        null
+                    }
+                    // EvImageData
+                    val imageData = ImageData().apply {
+                        lat = resource.attributes.latitude
+                        lon = resource.attributes.longitude
+                        filePath = "file://${newFile.path}"
+                        this.address = AppUtil.getPostalCodeAndAllAddress(context, LatLng(lat, lon))
+                    }
+                    tmp.add(imageData)
+                }
+            }
+        }
+        // アプリ内キャッシュに登録
+        images.addAll(tmp)
+        Prefs().allImage.put(AllImage().apply { allImage = images })
     }
 }

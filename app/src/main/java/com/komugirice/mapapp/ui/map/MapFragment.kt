@@ -693,7 +693,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
                 takePictureIntent.resolveActivity(packageManager)?.also {
                     // Create the File where the photo should go
                     val photoFile: File? = try {
-                        helper.createImageFileToCache()
+                        AppUtil.createImageFileToCache()
 
                     } catch (ex: Throwable) {
                         // Error occurred while creating the File

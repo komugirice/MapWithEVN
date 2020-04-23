@@ -17,6 +17,7 @@ import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
 import com.komugirice.mapapp.data.AllImage
 import com.komugirice.mapapp.data.EvImageData
 import com.komugirice.mapapp.data.ImageData
+import com.komugirice.mapapp.util.AppUtil
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -26,36 +27,6 @@ import java.util.*
 
 
 object MapFragmentHelper: EvernoteHelper() {
-
-    /**
-     * ExternalStorageに画像ファイル作成
-     */
-    @Throws(IOException::class)
-    fun createImageFileToStorage(): File {
-        // Create an image file name
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-        val storageDir: File? = MyApplication.applicationContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        return File.createTempFile(
-            "JPEG_${timeStamp}_", /* prefix */
-            ".jpg", /* suffix */
-            storageDir /* directory */
-        )
-    }
-
-    /**
-     * キャッシュに画像ファイル作成
-     */
-    @Throws(IOException::class)
-    fun createImageFileToCache(): File {
-        // Create an image file name
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-        val storageDir: File? = MyApplication.applicationContext.cacheDir
-        return File.createTempFile(
-            "JPEG_${timeStamp}_", /* prefix */
-            ".jpg", /* suffix */
-            storageDir /* directory */
-        )
-    }
 
     /**
      * マーカー作成
@@ -116,7 +87,7 @@ object MapFragmentHelper: EvernoteHelper() {
 
         // マーカー用の画像ファイル作成
         val newFile: File? = try {
-            createImageFileToCache()
+            AppUtil.createImageFileToCache()
         } catch (ex: IOException) {
             // Error occurred while creating the File
             null

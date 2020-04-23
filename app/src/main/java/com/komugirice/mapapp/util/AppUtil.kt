@@ -2,12 +2,16 @@ package com.komugirice.mapapp.util
 
 import android.content.Context
 import android.location.Geocoder
+import android.os.Environment
 import com.google.android.gms.maps.model.LatLng
+import com.komugirice.mapapp.MyApplication
 import com.komugirice.mapapp.MyApplication.Companion.applicationContext
 import com.komugirice.mapapp.extension.extractPostalCodeAndAllAddress
 import com.komugirice.mapapp.extension.extractPostalCodeAndHalfAddress
 import timber.log.Timber
 import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
 import java.util.*
 
 object AppUtil {
@@ -45,5 +49,35 @@ object AppUtil {
             .get(0)
             .getAddressLine(0)
             .extractPostalCodeAndHalfAddress()
+    }
+
+    /**
+     * ExternalStorageに画像ファイル作成
+     */
+    @Throws(IOException::class)
+    fun createImageFileToStorage(): File {
+        // Create an image file name
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val storageDir: File? = MyApplication.applicationContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(
+            "JPEG_${timeStamp}_", /* prefix */
+            ".jpg", /* suffix */
+            storageDir /* directory */
+        )
+    }
+
+    /**
+     * キャッシュに画像ファイル作成
+     */
+    @Throws(IOException::class)
+    fun createImageFileToCache(): File {
+        // Create an image file name
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val storageDir: File? = MyApplication.applicationContext.cacheDir
+        return File.createTempFile(
+            "JPEG_${timeStamp}_", /* prefix */
+            ".jpg", /* suffix */
+            storageDir /* directory */
+        )
     }
 }
