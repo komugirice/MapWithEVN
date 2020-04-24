@@ -82,8 +82,7 @@ import java.io.File
  * onCreatedFindNote
  * onCreateNewNote
  * refresh
- * handleEvernoteApiException
- * isExistEvNotebook
+ * update
  *
  */
 class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
@@ -265,7 +264,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
             Prefs().allImage.put(AllImage().apply { allImage = images })
             posChangeMarker?.showInfoWindow()
         } else {
-            if (!isExistEvNotebook()) return
+            if (!helper.isExistEvNotebook(context)) return
             // マーカーの画像データ
             val evImage = posChangeMarker?.tag as EvImageData
             // クラス変数から位置変更前にいたノート抽出
@@ -392,7 +391,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
                 // Evernote
                 var imageFile = it.makeTempFile()
                 if (imageFile != null) {
-                    if (!isExistEvNotebook()) return
+                    if (!helper.isExistEvNotebook(context)) return
 
                     // 設定情報からリソース作成
                     currentEvResource = helper.createEvResource(imageFile, latLng, address)
@@ -826,18 +825,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
         refreshData()
     }
 
-    /**
-     * Evernoteノートブックの存在チェック
-     */
-    private fun isExistEvNotebook(): Boolean {
-        if (evNotebook == null) {
-            // ノートブック存在エラー
-            Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG)
-                .show()
-            return false
-        }
-        return true
-    }
+
 
     companion object {
         private const val REQUEST_CODE_CHOOSE_IMAGE = 1000

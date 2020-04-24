@@ -173,4 +173,17 @@ open class EvernoteHelper {
         }
     }
 
+    /**
+     * Evernoteノートブックの存在チェック
+     */
+    fun isExistEvNotebook(context: Context?): Boolean {
+        if (MyApplication.evNotebook == null) {
+            // ノートブック存在エラー
+            Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG)
+                .show()
+            return false
+        }
+        return true
+    }
+
 }

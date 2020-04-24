@@ -20,6 +20,14 @@
     <string name="failed_create_notebook">ノートブック「%1$s」の作成に失敗しました</string>
     <string name="yes">はい</string>
     <string name="no">いいえ</string>
+    <string name="ok">OK</string>
+    <string name="cancel">キャンセル</string>
+    <string name="sync_label">画像データを同期</string>
+    <string name="sync_cache_to_ev_label">アプリ内キャッシュ → Evernote</string>
+    <string name="sync_ev_to_cache_label">Evernote → アプリ内キャッシュ</string>
+    <string name="sync_perfect">完全に同期</string>
+    <string name="sync_difference">差分を同期</string>
+    <string name="confirm_sync">以下の設定で同期を実行しますか？\n\n%1$s\n%2$s\n\nノートブック：%3$s</string>
     <!-- map -->
     <string name="current_point">この位置に登録します</string>
     <string name="menu_delete">削除</string>
@@ -27,11 +35,7 @@
     <!-- gallery_preference -->
     <string name="lat_label">緯度：</string>
     <string name="lon_label">経度：</string>
-    <string name="sync_label">画像データを同期</string>
-    <string name="sync_cache_to_ev_label">アプリ内キャッシュ → Evernote</string>
-    <string name="syncev_to_cache__label">Evernote → アプリ内キャッシュ</string>
-    <string name="sync_perfect">完全に同期</string>
-    <string name="sync_difference">差分を同期</string>
+
 
 </resources>
 

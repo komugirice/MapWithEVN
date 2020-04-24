@@ -1,6 +1,9 @@
 package com.komugirice.mapapp.ui.preference
 
 
+import android.app.AlertDialog
+import android.app.Application
+import android.content.DialogInterface
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -9,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -163,51 +167,128 @@ class PreferenceFragment : Fragment() {
 
         // アプリ内キャッシュ → Evernote 完全に同期
         syncPerfectCacheToEv.setOnClickListener {
+            if (!EvernoteHelper.isExistEvNotebook(context)) return@setOnClickListener
             MyApplication.evNotebook?.apply {
-                // ノート検索タスク実行
-                FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
-                    this@PreferenceFragment,
-                    "onSyncPerfectCacheToEv"
-                )
+                // 確認ボタン
+                AlertDialog.Builder(context)
+                    .setMessage(
+                        getString(
+                            R.string.confirm_sync,
+                            getString(R.string.sync_cache_to_ev_label),
+                            getString(R.string.sync_perfect),
+                            this.name
+                        )
+                    )
+                    .setPositiveButton(R.string.ok, object : DialogInterface.OnClickListener {
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                            // ノート検索タスク実行
+                            FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
+                                this@PreferenceFragment,
+                                "onSyncPerfectCacheToEv"
+                            )
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, object : DialogInterface.OnClickListener {
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                        }
+                    }).show()
             }
         }
 
         // アプリ内キャッシュ → Evernote 差分を同期
         syncDiffCacheToEv.setOnClickListener {
+            if (!EvernoteHelper.isExistEvNotebook(context)) return@setOnClickListener
             MyApplication.evNotebook?.apply {
-                // ノート検索タスク実行
-                FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
-                    this@PreferenceFragment,
-                    "onSyncDiffCacheToEv"
-                )
+                // 確認ボタン
+                AlertDialog.Builder(context)
+                    .setMessage(
+                        getString(
+                            R.string.confirm_sync,
+                            getString(R.string.sync_cache_to_ev_label),
+                            getString(R.string.sync_difference),
+                            this.name
+                        )
+                    )
+                    .setPositiveButton(R.string.ok, object : DialogInterface.OnClickListener {
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                            // ノート検索タスク実行
+                            FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
+                                this@PreferenceFragment,
+                                "onSyncDiffCacheToEv"
+                            )
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, object : DialogInterface.OnClickListener {
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                        }
+                    }).show()
+
             }
         }
         // Evernote → アプリ内キャッシュ 完全に同期
         syncPerfectEvToCache.setOnClickListener {
+            if (!EvernoteHelper.isExistEvNotebook(context)) return@setOnClickListener
             MyApplication.evNotebook?.apply {
-                // アプリ内キャッシュ消去
-                val images = mutableListOf<ImageData>()
-                images.addAll(Prefs().allImage.get().blockingSingle().allImage)
-                images.forEach{
-                    File(it.filePath).delete()
-                }
-                Prefs().allImage.remove()
+                // 確認ボタン
+                AlertDialog.Builder(context)
+                    .setMessage(
+                        getString(
+                            R.string.confirm_sync,
+                            getString(R.string.sync_ev_to_cache_label),
+                            getString(R.string.sync_perfect),
+                            this.name
+                        )
+                    )
+                    .setPositiveButton(R.string.ok, object : DialogInterface.OnClickListener {
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                            // アプリ内キャッシュ消去
+                            val images = mutableListOf<ImageData>()
+                            images.addAll(Prefs().allImage.get().blockingSingle().allImage)
+                            images.forEach {
+                                File(it.filePath).delete()
+                            }
+                            Prefs().allImage.remove()
 
-                // ノート検索タスク実行
-                FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
-                    this@PreferenceFragment,
-                    "onSyncDiffEvToCache"
-                )
+                            // ノート検索タスク実行
+                            FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
+                                this@PreferenceFragment,
+                                "onSyncDiffEvToCache"
+                            )
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, object : DialogInterface.OnClickListener {
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                        }
+                    }).show()
             }
         }
         // Evernote → アプリ内キャッシュ 差分を同期
         syncDiffEvToCache.setOnClickListener {
+            if (!EvernoteHelper.isExistEvNotebook(context)) return@setOnClickListener
             MyApplication.evNotebook?.apply {
-                // ノート検索タスク実行
-                FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
-                    this@PreferenceFragment,
-                    "onSyncDiffEvToCache"
-                )
+                // 確認ボタン
+                AlertDialog.Builder(context)
+                    .setMessage(
+                        getString(
+                            R.string.confirm_sync,
+                            getString(R.string.sync_ev_to_cache_label),
+                            getString(R.string.sync_difference),
+                            this.name
+                        )
+                    )
+                    .setPositiveButton(R.string.ok, object : DialogInterface.OnClickListener {
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                            // ノート検索タスク実行
+                            FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
+                                this@PreferenceFragment,
+                                "onSyncDiffEvToCache"
+                            )
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, object : DialogInterface.OnClickListener {
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                        }
+                    }).show()
             }
         }
     }
@@ -353,6 +434,8 @@ class PreferenceFragment : Fragment() {
             updateNotes.forEach {
                 MyApplication.noteStoreClient?.updateNote(it)
             }
+
+            Toast.makeText(context, "同期が完了しました。", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -391,11 +474,13 @@ class PreferenceFragment : Fragment() {
         // Evernoteリソース→imageDataリストへ詰め込む
         val tmp = mutableListOf<ImageData>()
         noteBook.notes.forEach {
-            it.resources.forEach { resource->
+            it.resources.forEach { resource ->
 
                 // 同じ座標の場合は登録しない
-                if(images.any{it.lat == resource.attributes.latitude
-                        && it.lon == resource.attributes.longitude})
+                if (images.any {
+                        it.lat == resource.attributes.latitude
+                                && it.lon == resource.attributes.longitude
+                    })
                     return@forEach
 
                 // アプリ内キャッシュ用の画像ファイル作成
@@ -428,5 +513,7 @@ class PreferenceFragment : Fragment() {
         // アプリ内キャッシュに登録
         images.addAll(tmp)
         Prefs().allImage.put(AllImage().apply { allImage = images })
+
+        Toast.makeText(context, "同期が完了しました。", Toast.LENGTH_LONG).show()
     }
 }
