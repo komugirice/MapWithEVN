@@ -26,6 +26,7 @@ import com.komugirice.mapapp.MyApplication
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
 import com.komugirice.mapapp.Prefs
 import com.komugirice.mapapp.R
+import com.komugirice.mapapp.base.BaseFragment
 import com.komugirice.mapapp.data.AllImage
 import com.komugirice.mapapp.data.EvImageData
 import com.komugirice.mapapp.data.ImageData
@@ -52,7 +53,7 @@ import java.io.IOException
 /**
  * @author komugirice
  */
-class PreferenceFragment : Fragment() {
+class PreferenceFragment : BaseFragment() {
 
     private lateinit var preferenceViewModel: PreferenceViewModel
 
@@ -181,6 +182,7 @@ class PreferenceFragment : Fragment() {
                     )
                     .setPositiveButton(R.string.ok, object : DialogInterface.OnClickListener {
                         override fun onClick(dialog: DialogInterface?, which: Int) {
+                            showProgressDialog(requireContext())
                             // ノート検索タスク実行
                             FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
                                 this@PreferenceFragment,
@@ -211,6 +213,7 @@ class PreferenceFragment : Fragment() {
                     )
                     .setPositiveButton(R.string.ok, object : DialogInterface.OnClickListener {
                         override fun onClick(dialog: DialogInterface?, which: Int) {
+                            showProgressDialog(requireContext())
                             // ノート検索タスク実行
                             FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
                                 this@PreferenceFragment,
@@ -241,6 +244,7 @@ class PreferenceFragment : Fragment() {
                     )
                     .setPositiveButton(R.string.ok, object : DialogInterface.OnClickListener {
                         override fun onClick(dialog: DialogInterface?, which: Int) {
+                            showProgressDialog(requireContext())
                             // アプリ内キャッシュ消去
                             val images = mutableListOf<ImageData>()
                             images.addAll(Prefs().allImage.get().blockingSingle().allImage)
@@ -278,6 +282,7 @@ class PreferenceFragment : Fragment() {
                     )
                     .setPositiveButton(R.string.ok, object : DialogInterface.OnClickListener {
                         override fun onClick(dialog: DialogInterface?, which: Int) {
+                            showProgressDialog(requireContext())
                             // ノート検索タスク実行
                             FindNotesTask(0, 250, MyApplication.evNotebook, null, null).start(
                                 this@PreferenceFragment,
@@ -435,6 +440,7 @@ class PreferenceFragment : Fragment() {
                 MyApplication.noteStoreClient?.updateNote(it)
             }
 
+            dismissProgressDialog()
             Toast.makeText(context, "同期が完了しました。", Toast.LENGTH_LONG).show()
         }
     }
@@ -514,6 +520,7 @@ class PreferenceFragment : Fragment() {
         images.addAll(tmp)
         Prefs().allImage.put(AllImage().apply { allImage = images })
 
+        dismissProgressDialog()
         Toast.makeText(context, "同期が完了しました。", Toast.LENGTH_LONG).show()
     }
 }
