@@ -9,8 +9,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import com.komugirice.mapapp.data.EvImageData
 import com.komugirice.mapapp.R
+import com.komugirice.mapapp.data.EvImageData
 import com.komugirice.mapapp.databinding.FragmentGalleryBinding
 import com.komugirice.mapapp.ui.map.MapFragment
 import kotlinx.android.synthetic.main.activity_header.*
@@ -87,7 +87,7 @@ class GalleryFragment : Fragment() {
             swipeRefreshLayout.isRefreshing = false
         }
 
-        titleTextView.text = "ギャラリー"
+        titleTextView.text = getString(R.string.menu_gallery)
     }
 
 

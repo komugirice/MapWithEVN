@@ -2,7 +2,6 @@ package com.komugirice.mapapp.ui.map
 
 import android.content.Context
 import android.graphics.BitmapFactory
-import android.os.Environment
 import android.util.Log
 import android.widget.Toast
 import com.evernote.client.android.EvernoteUtil
@@ -12,24 +11,17 @@ import com.evernote.edam.error.EDAMUserException
 import com.evernote.edam.type.Note
 import com.evernote.edam.type.Resource
 import com.evernote.edam.type.ResourceAttributes
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
-import com.komugirice.mapapp.*
+import com.komugirice.mapapp.MyApplication
+import com.komugirice.mapapp.MyApplication.Companion.applicationContext
 import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
-import com.komugirice.mapapp.data.AllImage
-import com.komugirice.mapapp.data.EvImageData
-import com.komugirice.mapapp.data.ImageData
+import com.komugirice.mapapp.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
-import java.io.IOException
-import java.text.SimpleDateFormat
 import java.util.*
 
 
@@ -162,11 +154,11 @@ open class EvernoteHelper {
 
             if (throwable is EDAMUserException) {
                 if (throwable.errorCode == EDAMErrorCode.QUOTA_REACHED) {
-                    errorMsg = "Evernoteアカウントのアップロード容量の上限に達しました"
+                    errorMsg = applicationContext.getString(R.string.exception_evernote_upload_amount)
                 }
             }
             if (errorMsg.isEmpty())
-                errorMsg = "API実行中に予期せぬエラーが発生しました\n${throwable}"
+                errorMsg = "${applicationContext.getString(R.string.exception_evernote_api)}\n${throwable}"
 
 
             Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
@@ -179,7 +171,7 @@ open class EvernoteHelper {
     fun isExistEvNotebook(context: Context?): Boolean {
         if (MyApplication.evNotebook == null) {
             // ノートブック存在エラー
-            Toast.makeText(context, "設定画面でノートブックを設定して下さい", Toast.LENGTH_LONG)
+            Toast.makeText(context, applicationContext.getString(R.string.no_evernote_notebook), Toast.LENGTH_LONG)
                 .show()
             return false
         }

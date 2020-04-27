@@ -441,7 +441,7 @@ class PreferenceFragment : BaseFragment() {
             }
 
             dismissProgressDialog()
-            Toast.makeText(context, "同期が完了しました。", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, R.string.success_sync, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -521,6 +521,6 @@ class PreferenceFragment : BaseFragment() {
         Prefs().allImage.put(AllImage().apply { allImage = images })
 
         dismissProgressDialog()
-        Toast.makeText(context, "同期が完了しました。", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, R.string.success_sync, Toast.LENGTH_LONG).show()
     }
 }

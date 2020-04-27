@@ -465,7 +465,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
                 MarkerOptions()
                     .position(it)
                     .title(locationStr)
-                    .snippet("この位置に登録します")
+                    .snippet(getString(R.string.pos_marker_snippet))
             )
             tapMarker?.apply {
                 tag = ImageData().apply {

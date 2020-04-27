@@ -43,7 +43,7 @@ class NotebookNameActivity : AppCompatActivity() {
 
     private fun initLayout() {
 
-        titleTextView.text = "ノートブック名"
+        titleTextView.text = getString(R.string.notebook_name)
 
         val notebookName = Prefs().notebookName.get().blockingSingle()
         notebookNameEditText.setText(notebookName)

@@ -132,7 +132,7 @@ class MainActivity : BaseActivity(),
         if (successful) {
             GetUserTask().start(this, "onLoginFinished")
         } else {
-            Toast.makeText(this, "Evernote連携に失敗しました", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, R.string.failed_evernote_connect, Toast.LENGTH_LONG).show()
         }
     }
 
