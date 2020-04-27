@@ -73,8 +73,8 @@
             android:layout_height="wrap_content"
             android:gravity="left"
             android:text="@string/none"
-
             android:textSize="@dimen/sp_m"
+            android:textColor="@color/royal_blue"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/evernoteLabel" />
