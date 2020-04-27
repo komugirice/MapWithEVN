@@ -140,6 +140,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
             if (it) {
                 isPosChangeModeGroup.visibility = View.VISIBLE
                 buttonGroup.visibility = View.GONE
+                galleryGroup.visibility = View.GONE
             } else {
                 isPosChangeModeGroup.visibility = View.GONE
                 buttonGroup.visibility = View.VISIBLE
@@ -184,7 +185,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
     override fun onResume() {
         super.onResume()
 
-        // ナビゲーションからギャラリーを非活性
+        // ナビゲーションからギャラリーを活性化
         activity?.nav_view?.getMenu()?.findItem(R.id.nav_gallery)?.setEnabled(true)
 
 //        if(::mMap.isInitialized)
