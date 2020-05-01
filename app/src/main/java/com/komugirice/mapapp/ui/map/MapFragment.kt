@@ -1,6 +1,8 @@
 package com.komugirice.mapapp.ui.map
 
+import android.app.AlertDialog
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.location.Location
 import android.net.Uri
@@ -552,21 +554,34 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
                                     }
                                     // 削除
                                     1 -> {
-                                        if (mode == Mode.CACHE) {
-                                            // キャッシュ画像削除
-                                            val imageData = it.tag as ImageData
-                                            helper.deleteCacheImage(imageData, images)
-                                        } else {
-                                            // Evernote画像削除
-                                            val tag = it.tag as EvImageData
-                                            val note = currentEvNotebook.getNote(tag.noteGuid)
-                                            deleteEvResouceWrap(note!!, tag.guid)
-                                            currentEvResource.clear()
-                                        }
-                                        // マーカー削除
-                                        imageMarkers.remove(it)
-                                        it.hideInfoWindow()
-                                        it.remove()
+                                        // 削除してよろしいですか
+                                        AlertDialog.Builder(context)
+                                            .setMessage(R.string.confirm_delete)
+                                            .setPositiveButton(R.string.ok, object : DialogInterface.OnClickListener {
+                                                override fun onClick(dialog: DialogInterface?, which: Int) {
+
+                                                    if (mode == Mode.CACHE) {
+                                                        // キャッシュ画像削除
+                                                        val imageData = it.tag as ImageData
+                                                        helper.deleteCacheImage(imageData, images)
+                                                    } else {
+                                                        // Evernote画像削除
+                                                        val tag = it.tag as EvImageData
+                                                        val note = currentEvNotebook.getNote(tag.noteGuid)
+                                                        deleteEvResouceWrap(note!!, tag.guid)
+                                                        currentEvResource.clear()
+                                                    }
+                                                    // マーカー削除
+                                                    imageMarkers.remove(it)
+                                                    it.hideInfoWindow()
+                                                    it.remove()
+                                                }
+
+                                            })
+                                            .setNegativeButton(R.string.cancel, object : DialogInterface.OnClickListener {
+                                                override fun onClick(dialog: DialogInterface?, which: Int) {
+                                                }
+                                            }).show()
                                     }
                                     else -> return@listItems
                                 }

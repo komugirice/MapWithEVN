@@ -2,13 +2,13 @@
     <string name="app_name">MapWithEVN</string>
     <string name="title_activity_maps">MapWithEVN</string>
 
+    <!-- fragment_preference-->
     <string name="action_settings">Settings</string>
     <string name="menu_mode">保存モード</string>
     <string name="menu_gallery">ギャラリー</string>
     <string name="menu_evernote">Evernote設定</string>
     <string name="menu_preference">設定</string>
     <string name="menu_map">地図</string>
-    <!-- fragment_preference-->
     <string name="notebook_label">ノートブック</string>
     <string name="none">なし</string>
     <string name="save_button">登録</string>
@@ -45,6 +45,7 @@
     <string name="exception_evernote_upload_amount">Evernoteアカウントのアップロード容量の上限に達しました</string>
     <string name="exception_evernote_api">API実行中に予期せぬエラーが発生しました</string>
     <string name="no_evernote_notebook">設定画面でノートブックを設定して下さい</string>
+    <string name="confirm_delete">削除してよろしいですか</string>
 </resources>
 
 
