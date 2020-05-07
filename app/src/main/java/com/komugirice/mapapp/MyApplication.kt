@@ -3,9 +3,11 @@ package com.komugirice.mapapp
 import android.app.Application
 import android.content.Context
 import com.evernote.client.android.EvernoteSession
+import com.evernote.client.android.asyncclient.EvernoteNoteStoreClient
 import com.evernote.edam.type.Notebook
 import com.evernote.edam.type.User
 import com.komugirice.mapapp.enums.Mode
+import timber.log.Timber
 import java.util.*
 
 /**
@@ -32,7 +34,7 @@ class MyApplication: Application() {
      * Change to PRODUCTION to use the Evernote production service
      * once your code is complete.
      */
-    private val EVERNOTE_SERVICE = EvernoteSession.EvernoteService.SANDBOX
+    private val EVERNOTE_SERVICE = EvernoteSession.EvernoteService.PRODUCTION
 
     /*
      * Set this to true if you want to allow linked notebooks for accounts that
@@ -44,8 +46,17 @@ class MyApplication: Application() {
     override fun onCreate() {
         super.onCreate()
         MyApplication.applicationContext = applicationContext
+        initialize()
 
-        //Set up the Evernote singleton session, use EvernoteSession.getInstance() later
+
+    }
+
+    private fun initialize() {
+        initEvernoteSession()
+        initTimber()
+    }
+
+    private fun initEvernoteSession() {
         //Set up the Evernote singleton session, use EvernoteSession.getInstance() later
         EvernoteSession.Builder(this)
             .setEvernoteService(EVERNOTE_SERVICE)
@@ -56,9 +67,14 @@ class MyApplication: Application() {
             .asSingleton()
     }
 
+    private fun initTimber() {
+        Timber.plant(Timber.DebugTree())
+    }
+
     companion object {
         lateinit var applicationContext: Context
         var isEvernoteLoggedIn = false
+        var noteStoreClient: EvernoteNoteStoreClient? = null
         var evernoteUser: User? = null
         var evNotebook: Notebook? = null
         var mode: Mode? = null

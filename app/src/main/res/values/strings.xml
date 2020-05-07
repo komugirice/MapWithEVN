@@ -2,22 +2,50 @@
     <string name="app_name">MapWithEVN</string>
     <string name="title_activity_maps">MapWithEVN</string>
 
+    <!-- fragment_preference-->
     <string name="action_settings">Settings</string>
     <string name="menu_mode">保存モード</string>
-    <string name="menu_gallery">Gallery</string>
+    <string name="menu_gallery">ギャラリー</string>
     <string name="menu_evernote">Evernote設定</string>
     <string name="menu_preference">設定</string>
     <string name="menu_map">地図</string>
-    <!-- fragment_preference-->
     <string name="notebook_label">ノートブック</string>
     <string name="none">なし</string>
     <string name="save_button">登録</string>
-    <string name="mode_cache">アプリ内キャッシュ</string>
+    <string name="mode_cache">アプリ内ストレージ</string>
     <string name="mode_evernote">Evernote</string>
     <string name="evernote_label">Evernote連携ユーザ</string>
     <string name="alert_create_notebook">ノートブック名が存在しません。「%1$s」を新しく作成しますか？</string>
     <string name="success_create_notebook">「%1$s」を作成しました</string>
+    <string name="failed_create_notebook">ノートブック「%1$s」の作成に失敗しました</string>
     <string name="yes">はい</string>
     <string name="no">いいえ</string>
+    <string name="ok">OK</string>
+    <string name="cancel">キャンセル</string>
+    <string name="cancel_en">CANCEL</string>
+    <string name="sync_label">画像データを同期</string>
+    <string name="sync_cache_to_ev_label">アプリ内キャッシュ → Evernote</string>
+    <string name="sync_ev_to_cache_label">Evernote → アプリ内キャッシュ</string>
+    <string name="sync_perfect">完全に同期</string>
+    <string name="sync_difference">差分を同期</string>
+    <string name="confirm_sync">以下の設定で同期を実行しますか？\n\n%1$s\n%2$s\n\nノートブック：%3$s</string>
+    <string name="success_sync">同期が完了しました</string>
+    <!-- fragment_gallery -->
+    <string name="lat_label">緯度：</string>
+    <string name="lon_label">経度：</string>
+    <!-- map -->
+    <string name="current_point">この位置に登録します</string>
+    <string name="menu_delete">削除</string>
+    <string name="menu_position_change">位置変更</string>
+    <string name="gallery_button">一覧</string>
+    <string name="pos_info_view">位置マーカーを\n設定して下さい</string>
+    <string name="pos_marker_snippet">この位置に登録します</string>
+    <string name="notebook_name">ノートブック名</string>
+    <string name="failed_evernote_connect">Evernote連携に失敗しました</string>
+    <string name="exception_evernote_upload_amount">Evernoteアカウントのアップロード容量の上限に達しました</string>
+    <string name="exception_evernote_api">API実行中に予期せぬエラーが発生しました</string>
+    <string name="no_evernote_notebook">設定画面でノートブックを設定して下さい</string>
+    <string name="confirm_delete">削除してよろしいですか</string>
 </resources>
+
 

@@ -3,14 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-
     <item android:title="Menu">
         <menu>
 
+<!--
             <item
                 android:id="@+id/nav_map"
                 android:icon="@drawable/ic_menu_map"
                 android:title="@string/menu_map" />
+-->
 
             <item
                 android:id="@+id/nav_preference"

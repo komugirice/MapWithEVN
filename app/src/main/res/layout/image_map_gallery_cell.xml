@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+        <variable
+            name="evImageData"
+            type="com.komugirice.mapapp.data.EvImageData" />
+
+        <variable
+            name="filePath"
+            type="String" />
+
+        <variable
+            name="postalCode"
+            type="String" />
+
+        <variable
+            name="address"
+            type="String" />
+
+        <variable
+            name="lat"
+            type="String" />
+
+        <variable
+            name="lon"
+            type="String" />
+    </data>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:layout_width="match_parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/rootView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="24dp">
+
+            <ImageView
+                android:id="@+id/image"
+                android:layout_width="@dimen/spot_image_width"
+                android:layout_height="@dimen/spot_image_height"
+                android:gravity="left"
+                android:scaleType="centerCrop"
+                android:layout_marginBottom="16dp"
+                app:imageUrl="@{filePath}"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/postalCodeTextView"/>
+
+            <TextView
+                android:id="@+id/postalCodeTextView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:gravity="start|center"
+                android:lines="1"
+                android:textColor="@android:color/black"
+                android:textSize="15sp"
+                android:text="@{postalCode}"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/image"
+                app:layout_constraintBottom_toTopOf="@+id/addressTextView"/>
+
+            <TextView
+                android:id="@+id/addressTextView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:ellipsize="end"
+                android:gravity="start|top"
+                android:lines="2"
+                android:textColor="@android:color/black"
+                android:textSize="15sp"
+                android:text="@{address}"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/postalCodeTextView"
+                app:layout_constraintBottom_toTopOf="@+id/latTextView"/>
+
+            <TextView
+                android:id="@+id/latTextView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:gravity="start|center"
+                android:lines="1"
+                android:textColor="@android:color/black"
+                android:textSize="15sp"
+                android:text="@{@string/lat_label + lat}"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/addressTextView"
+                app:layout_constraintBottom_toTopOf="@+id/lonTextView"/>
+
+            <TextView
+                android:id="@+id/lonTextView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:gravity="start|center"
+                android:lines="1"
+                android:textColor="@android:color/black"
+                android:textSize="15sp"
+                android:text="@{@string/lon_label +lon}"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/latTextView"
+                app:layout_constraintBottom_toBottomOf="parent"/>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
+</layout>

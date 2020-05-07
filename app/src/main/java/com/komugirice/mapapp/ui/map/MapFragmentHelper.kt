@@ -1,12 +1,8 @@
 package com.komugirice.mapapp.ui.map
 
-import android.content.Context
 import android.graphics.BitmapFactory
-import android.location.Geocoder
 import android.os.Environment
-import com.evernote.client.android.EvernoteSession
 import com.evernote.client.android.EvernoteUtil
-import com.evernote.client.android.type.NoteRef
 import com.evernote.client.conn.mobile.FileData
 import com.evernote.edam.type.Note
 import com.evernote.edam.type.Resource
@@ -14,10 +10,14 @@ import com.evernote.edam.type.ResourceAttributes
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.komugirice.mapapp.ImageData
-import com.komugirice.mapapp.MyApplication
-import com.komugirice.mapapp.extension.extractPostalCodeAndAddress
+import com.komugirice.mapapp.*
+import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
+import com.komugirice.mapapp.data.AllImage
+import com.komugirice.mapapp.data.EvImageData
+import com.komugirice.mapapp.data.ImageData
+import com.komugirice.mapapp.util.AppUtil
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -26,132 +26,103 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-object MapFragmentHelper {
-
-    private val noteStoreClient = EvernoteSession.getInstance().evernoteClientFactory.noteStoreClient
+object MapFragmentHelper: EvernoteHelper() {
 
     /**
-     * 住所取得
+     * マーカー作成
      */
-    fun getAddress(context: Context?, latLng: LatLng): String {
-        return Geocoder(context, Locale.JAPAN)
-            .getFromLocation(latLng.latitude, latLng.longitude, 1)
-            .get(0)
-            .getAddressLine(0)
-            .extractPostalCodeAndAddress()
-    }
+    fun createMarker(imageData: ImageData, mMap: GoogleMap): Marker {
 
-    /**
-     * Evernoteノート情報作成
-     */
-    fun createEvNote(imageFile: File, latLng: LatLng, title: String): MapFragment.Companion.EvNote {
-        // Hash the data in the image file. The hash is used to reference the file in the ENML note content.
-        var `in` = BufferedInputStream(FileInputStream(imageFile.getPath()))
-        val data = FileData(EvernoteUtil.hash(`in`), File(imageFile.getPath()))
-
-        val opts = BitmapFactory.Options()
-        opts.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(File(imageFile.path).absolutePath, opts)
-
-        val attributes = ResourceAttributes()
-        attributes.fileName = imageFile.name
-        attributes.longitude = latLng.longitude
-        attributes.latitude = latLng.latitude
-
-        val evNote = MapFragment.Companion.EvNote().apply {
-            // クラス変数evNote設定
-            this.title = title
-
-            this.resource.apply{
-                this.data = data
-                //height = opts.outHeight.toShort()
-                //width = opts.outWidth.toShort()
-                mime = "image/jpg"
-                this.attributes = attributes
-            }
-
-        }
-        return evNote
-    }
-
-    /**
-     * Evernoteノート更新
-     */
-    fun updateNote(note: Note, evNote: MapFragment.Companion.EvNote){
-        note.addToResources(evNote.resource)
-
-        note.content = note.content.removeSuffix(EvernoteUtil.NOTE_SUFFIX) +
-                "<en-media type=\"" + evNote.resource.mime + "\" hash=\"" +
-                EvernoteUtil.bytesToHex(evNote.resource.getData().getBodyHash()) + "\"/>" +
-                EvernoteUtil.NOTE_SUFFIX;
-
-        noteStoreClient.updateNote(note)
-    }
-
-    /**
-     * 画像ファイル作成
-     */
-    @Throws(IOException::class)
-    fun createImageFile(): File {
-        // Create an image file name
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-        val storageDir: File? = MyApplication.applicationContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        return File.createTempFile(
-            "JPEG_${timeStamp}_", /* prefix */
-            ".jpg", /* suffix */
-            storageDir /* directory */
+        val marker = mMap.addMarker(
+            MarkerOptions().position(
+                LatLng(
+                    imageData.lat,
+                    imageData.lon
+                )
+            ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
         )
+        marker.tag = imageData
+        return marker
     }
 
     /**
-     * Evernoteノート新規登録
+     * マーカー作成
      */
-    fun registNote(notebookGuid: String?, evNote: MapFragment.Companion.EvNote){
-        val note = Note()
-        note.title = evNote.title
-        note.content =
-            EvernoteUtil.NOTE_PREFIX +
-                    "<en-media type=\"" + evNote.resource.mime + "\" hash=\"" +
-                    EvernoteUtil.bytesToHex(evNote.resource.getData().getBodyHash()) + "\"/>" +
-                    EvernoteUtil.NOTE_SUFFIX;
-        note.addToResources(evNote.resource)
-        notebookGuid?.apply {
-            note.notebookGuid = this
+    fun createMarker(evResource: MapFragment.Companion.EvResource, mMap: GoogleMap): Marker {
+
+        val marker = mMap.addMarker(
+            MarkerOptions().position(
+                LatLng(
+                    evResource.resource.attributes.latitude,
+                    evResource.resource.attributes.longitude
+                )
+            ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+        )
+
+        // EvImageData
+        val evImageData = EvImageData().apply {
+            lat = evResource.resource.attributes.latitude
+            lon = evResource.resource.attributes.longitude
+            filePath = "file://${evResource.filePath}"
+            this.address = evResource.title
+            guid = evResource.resource.guid
+            noteGuid = evResource.resource.noteGuid
         }
-        noteStoreClient.createNote(note)
+        marker.tag = evImageData
+        return marker
     }
 
     /**
      * Evernoteデータからのマーカー作成
      */
-    fun createMarkerFromEvernote(resource: Resource, address: String, mMap: GoogleMap) {
-        // 画像ファイル作成
+    fun createMarkerFromEvernote(resource: Resource, address: String, mMap: GoogleMap): Marker {
+        var marker = mMap.addMarker(
+            MarkerOptions().position(
+                LatLng(
+                    resource.attributes.latitude,
+                    resource.attributes.longitude
+                )
+            ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+        )
+
+        // マーカー用の画像ファイル作成
         val newFile: File? = try {
-            createImageFile()
+            AppUtil.createImageFileToCache()
         } catch (ex: IOException) {
             // Error occurred while creating the File
             null
         }
         newFile?.apply {
-            // 画像ファイルにevernote取得データをコピー
-            writeBytes(resource.data.body)
-            var marker = mMap.addMarker(
-                MarkerOptions().position(
-                    LatLng(
-                        resource.attributes.latitude,
-                        resource.attributes.longitude
-                    )
-                ).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-            )
-            // ImageData
-            val imageData = ImageData().apply {
+
+            try {
+                // 画像ファイルにevernote取得データをコピー
+                writeBytes(resource.data.body)
+            } catch(e: Exception) {
+                // resource.data.bodyがnullでexceptionの時がある
+                null
+            }
+            // EvImageData
+            val evImageData = EvImageData().apply {
                 lat = resource.attributes.latitude
                 lon = resource.attributes.longitude
                 filePath = "file://${newFile.path}"
                 this.address = address
+                guid = resource.guid
+                noteGuid = resource.noteGuid
             }
-            marker.tag = imageData
+            marker.tag = evImageData
+
         }
+        return marker
+    }
+
+    fun deleteCacheImage(imageData: ImageData,
+                         images: MutableList<ImageData>) {
+        File(imageData.filePath).delete()
+        images.remove(imageData)
+        Prefs().allImage.put(AllImage().apply { allImage = images })
+
+
     }
 
 }

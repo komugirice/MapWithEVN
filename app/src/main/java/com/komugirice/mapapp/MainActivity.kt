@@ -3,39 +3,39 @@ package com.komugirice.mapapp
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
+import com.evernote.client.android.EvernoteSession
+import com.evernote.client.android.login.EvernoteLoginFragment
 import com.evernote.edam.type.Notebook
 import com.evernote.edam.type.User
-import com.google.gson.Gson
 import com.komugirice.mapapp.MyApplication.Companion.evNotebook
 import com.komugirice.mapapp.MyApplication.Companion.evernoteUser
 import com.komugirice.mapapp.MyApplication.Companion.isEvernoteLoggedIn
+import com.komugirice.mapapp.MyApplication.Companion.noteStoreClient
+import com.komugirice.mapapp.base.BaseActivity
+import com.komugirice.mapapp.data.EvImageData
 import com.komugirice.mapapp.task.FindNotebooksTask
 import com.komugirice.mapapp.task.GetUserTask
+import com.komugirice.mapapp.ui.gallery.GalleryFragment
+import com.komugirice.mapapp.ui.map.MapFragment
 import kotlinx.android.synthetic.main.activity_main.*
 import net.vrallev.android.task.TaskResult
 
 /**
  * @author komugirice
  */
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity(),
+    EvernoteLoginFragment.ResultCallback, GalleryFragment.OnImageSelectedListener{
 
     // drawer
     private lateinit var appBarConfiguration: AppBarConfiguration
-    // 位置
-    private lateinit var locationManager: LocationManager
-    private lateinit var locationListener: LocationListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,11 +45,11 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment)
         nav_view.setupWithNavController(navController)
         appBarConfiguration = AppBarConfiguration(navController.graph, drawer_layout)
-        // 位置ダイアログ
-        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        initLocationListener()
+        // 現在位置情報の許可
+        requestPermissons()
 
         if (isEvernoteLoggedIn) {
+            noteStoreClient = EvernoteSession.getInstance().evernoteClientFactory.noteStoreClient
             if (savedInstanceState == null) {
                 GetUserTask().start(this)
                 FindNotebooksTask().start(this, "personal");
@@ -63,26 +63,12 @@ class MainActivity : AppCompatActivity() {
      * 現在位置情報の許可ダイアログの準備
      *
      */
-    private fun initLocationListener() {
-
-        locationListener = object: LocationListener {
-            override fun onLocationChanged(location: Location?) {
-            }
-
-            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-            }
-
-            override fun onProviderEnabled(provider: String?) {
-            }
-
-            override fun onProviderDisabled(provider: String?) {
-            }
-        }
+    private fun requestPermissons() {
 
 
         if (Build.VERSION.SDK_INT < 23) {
             try {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5.5f, locationListener)
+//                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
             } catch(e: SecurityException){
             }
         } else {
@@ -91,8 +77,6 @@ class MainActivity : AppCompatActivity() {
                     android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
                 this.requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1)
-            } else {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5.5f, locationListener)
             }
         }
     }
@@ -111,7 +95,7 @@ class MainActivity : AppCompatActivity() {
         if(requestCode == 1) {
             if (grantResults.size > 0 && grantResults.get(0) == PackageManager.PERMISSION_GRANTED) {
                 if (checkPermission(this)) {
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
+
                 }
             }
         }
@@ -138,6 +122,46 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
         }
+    }
+
+
+    /**
+     * PreferenceFragmentの呼び出し機能だが、activityでないと実装できない
+     */
+    override fun onLoginFinished(successful: Boolean) {
+        if (successful) {
+            GetUserTask().start(this, "onLoginFinished")
+        } else {
+            Toast.makeText(this, R.string.failed_evernote_connect, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    /**
+     * GalleryFragmentからのonClickCallBackで呼び出し
+     * bundleからMapFragment.companionの変数に変更したので不要になった
+     */
+    override fun onImageSelected(target: EvImageData) {
+
+//        val bundle = Bundle()
+//        bundle.putBoolean(MapFragment.KEY_IS_REFRESH, true)
+//        bundle.putSerializable(MapFragment.KEY_IMAGE_DATA, target)
+//
+//        val mapFragment = MapFragment().apply{
+//            arguments = bundle
+//        }
+//
+//        val transaction =  supportFragmentManager.beginTransaction()
+//        transaction.replace(R.id.nav_host_fragment, mapFragment)
+//        transaction.commit()
+
+        //MapFragment.reStartFromGallery(this, true, target)
+    }
+
+    override fun onBackPressed() {
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
+        val fragment = navHostFragment?.childFragmentManager?.getFragments()?.first()
+        if(fragment !is MapFragment)
+            super.onBackPressed()
     }
 
     companion object {

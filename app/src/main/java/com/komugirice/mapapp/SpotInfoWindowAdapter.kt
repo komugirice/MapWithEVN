@@ -5,8 +5,13 @@ import android.view.LayoutInflater
 import android.view.View
 import com.komugirice.mapapp.databinding.InfoWindowLayoutBinding
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
+import com.komugirice.mapapp.MyApplication.Companion.applicationContext
+import com.komugirice.mapapp.data.ImageData
+import com.komugirice.mapapp.databinding.InfoTitleWindowLayoutBinding
 import com.komugirice.mapapp.extension.visible
+import com.komugirice.mapapp.util.AppUtil
 import com.squareup.picasso.Picasso
 
 /**
@@ -19,6 +24,9 @@ class SpotInfoWindowAdapter(private val activity: Activity?, spotIds: List<Long>
 
     private val imageLoadedMap = mutableMapOf<Long, Boolean>()
 
+    private val infoTItleWindowLayoutBinding: InfoTitleWindowLayoutBinding =
+        InfoTitleWindowLayoutBinding.inflate(LayoutInflater.from(activity), null, false)
+
     init {
         spotIds.forEach {
             imageLoadedMap[it] = false
@@ -29,22 +37,31 @@ class SpotInfoWindowAdapter(private val activity: Activity?, spotIds: List<Long>
         return View(activity)
     }
 
-    override fun getInfoWindow(tempMarker: Marker?): View {
+    override fun getInfoWindow(tempMarker: Marker?): View? {
         val marker = tempMarker ?: return View(activity)
         var spot = marker.tag as? ImageData ?: return View(activity)
-        if (imageLoadedMap[spot.id] == true) {
-            infoWindowLayoutBinding.apply {
-                progressImageView.visible(false)
+        // 画像のマーカーと設置位置のマーカーの処理分け
+        if(spot.filePath.isNotEmpty()) {
+            if (imageLoadedMap[spot.id] == true) {
+                infoWindowLayoutBinding.apply {
+                    progressImageView.visible(false)
+                    // 住所表示
+                    addressTextView.text = AppUtil.getPostalCodeAndAllAddress(applicationContext, LatLng(spot.lat, spot.lon))
+                }
+                Picasso.get().load(spot.filePath).into(infoWindowLayoutBinding.spotImageView)
+
+            } else {
+                imageLoadedMap[spot.id] = true
+                infoWindowLayoutBinding.apply {
+                    progressImageView.visible(true)
+                }
+                Picasso.get().load(spot.filePath)
+                    .into(infoWindowLayoutBinding.spotImageView, InfoWindowRefresher(marker))
             }
-            Picasso.get().load(spot.filePath).into(infoWindowLayoutBinding.spotImageView)
+            return infoWindowLayoutBinding.root
         } else {
-            imageLoadedMap[spot.id] = true
-            infoWindowLayoutBinding.apply {
-                progressImageView.visible(true)
-            }
-            Picasso.get().load(spot.filePath)
-                .into(infoWindowLayoutBinding.spotImageView, InfoWindowRefresher(marker))
+            infoTItleWindowLayoutBinding.titleTextView.text = spot.address
+            return infoTItleWindowLayoutBinding.root
         }
-        return infoWindowLayoutBinding.root
     }
 }
