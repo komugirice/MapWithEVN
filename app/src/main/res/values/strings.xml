@@ -30,6 +30,8 @@
     <string name="sync_difference">差分を同期</string>
     <string name="confirm_sync">以下の設定で同期を実行しますか？\n\n%1$s\n%2$s\n\nノートブック：%3$s</string>
     <string name="success_sync">同期が完了しました</string>
+    <string name="enum_cache">アプリ内キャッシュ</string>
+    <string name="enum_evernote">Evernote</string>
     <!-- fragment_gallery -->
     <string name="lat_label">緯度：</string>
     <string name="lon_label">経度：</string>

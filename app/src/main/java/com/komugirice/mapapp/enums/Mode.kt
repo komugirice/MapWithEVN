@@ -1,8 +1,11 @@
 package com.komugirice.mapapp.enums
 
+import com.komugirice.mapapp.MyApplication
+import com.komugirice.mapapp.R
+
 enum class Mode(val id: Int, val modeName: String) {
-    CACHE(0,"アプリ内キャッシュ"),
-    EVERNOTE(1,"Evernote");
+    CACHE(0, MyApplication.applicationContext.getString(R.string.enum_cache)),
+    EVERNOTE(1, MyApplication.applicationContext.getString(R.string.enum_evernote));
 
     companion object {
         // enumへの変換を行う
