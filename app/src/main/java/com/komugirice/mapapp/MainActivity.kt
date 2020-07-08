@@ -54,7 +54,7 @@ class MainActivity : BaseActivity(),
                 GetUserTask().start(this)
                 FindNotebooksTask().start(this, "personal");
             } else {
-                evernoteUser?.let { onGetUser(it) }
+//                evernoteUser?.let { onGetUser(it) }
             }
         }
     }
