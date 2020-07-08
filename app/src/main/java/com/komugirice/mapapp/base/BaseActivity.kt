@@ -30,9 +30,13 @@ abstract class BaseActivity : AppCompatActivity() {
             setContentView(dialogBinding.root)
         }
         // 背景を透過
-        this.progressDialog?.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        this.progressDialog?.window?.setDimAmount(0.0f)
-        this.progressDialog?.show()
+        this.progressDialog?.apply {
+            window?.apply {
+                setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                setDimAmount(0.0f)
+            }
+            show()
+        }
     }
 
     protected fun dismissProgressDialog(){
