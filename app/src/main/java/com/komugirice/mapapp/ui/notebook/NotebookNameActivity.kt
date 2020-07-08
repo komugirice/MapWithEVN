@@ -5,14 +5,12 @@ import android.app.AlertDialog
 import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import com.evernote.client.android.EvernoteSession
 import com.evernote.edam.type.Notebook
-import com.google.gson.Gson
 import com.komugirice.mapapp.MyApplication
 import com.komugirice.mapapp.Prefs
 import com.komugirice.mapapp.R
@@ -26,13 +24,50 @@ import net.vrallev.android.task.TaskResult
 
 class NotebookNameActivity : AppCompatActivity() {
 
-    var mutableIsUpdate = MutableLiveData<Boolean>()
+    private lateinit var viewModel: NotebookNameViewModel
 
     private val noteStoreClient = EvernoteSession.getInstance().evernoteClientFactory.noteStoreClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_notebook_name)
+
+        viewModel = ViewModelProviders.of(this).get(NotebookNameViewModel::class.java).apply {
+            // onFindNotebooksの監視
+            liveIsUpdate.observe(this@NotebookNameActivity, Observer{
+                val notebookName = notebookNameEditText.text.toString().trim()
+                if(it == true) {
+                    // preferenceに登録
+                    Prefs().notebookName.put(notebookName)
+                    finish()
+                } else {
+                    AlertDialog.Builder(this@NotebookNameActivity)
+                        .setMessage(getString(R.string.alert_create_notebook, notebookName))
+                        .setPositiveButton(R.string.yes, object : DialogInterface.OnClickListener {
+                            override fun onClick(dialog: DialogInterface?, which: Int) {
+                                // ノートブック新規作成
+                                val notebook = Notebook().apply{
+                                    this.name = notebookName
+                                }
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    noteStoreClient.createNotebook(notebook)
+                                }
+                                Prefs().notebookName.put(notebookName)
+                                // 検索で使えない
+                                //MyApplication.evNotebook = notebook
+                                // notebook取得
+                                FindNotebooksTask().start(this@NotebookNameActivity, "onCreated");
+
+                            }
+                        })
+                        .setNeutralButton(R.string.no, object : DialogInterface.OnClickListener {
+                            override fun onClick(dialog: DialogInterface?, which: Int) {
+                            }
+                        }).show()
+
+                }
+            })
+        }
         initialize()
     }
 
@@ -63,40 +98,6 @@ class NotebookNameActivity : AppCompatActivity() {
         // notebook取得
         FindNotebooksTask().start(this, "personal");
 
-        // onFindNotebooksの監視
-        mutableIsUpdate.observe(this, Observer{
-            val notebookName = notebookNameEditText.text.toString().trim()
-            if(it == true) {
-                // preferenceに登録
-                Prefs().notebookName.put(notebookName)
-                finish()
-            } else {
-                AlertDialog.Builder(this)
-                    .setMessage(getString(R.string.alert_create_notebook, notebookName))
-                    .setPositiveButton(R.string.yes, object : DialogInterface.OnClickListener {
-                        override fun onClick(dialog: DialogInterface?, which: Int) {
-                            // ノートブック新規作成
-                            val notebook = Notebook().apply{
-                                this.name = notebookName
-                            }
-                            CoroutineScope(Dispatchers.IO).launch {
-                                noteStoreClient.createNotebook(notebook)
-                            }
-                            Prefs().notebookName.put(notebookName)
-                            // 検索で使えない
-                            //MyApplication.evNotebook = notebook
-                            // notebook取得
-                            FindNotebooksTask().start(this@NotebookNameActivity, "onCreated");
-
-                        }
-                    })
-                    .setNeutralButton(R.string.no, object : DialogInterface.OnClickListener {
-                        override fun onClick(dialog: DialogInterface?, which: Int) {
-                        }
-                    }).show()
-
-            }
-        })
     }
 
     @TaskResult(id = "personal")
@@ -105,11 +106,11 @@ class NotebookNameActivity : AppCompatActivity() {
         notebooks?.forEach {
             if(it != null && it?.name == text) {
                 MyApplication.evNotebook = it // グローバル変数のノートブック更新
-                mutableIsUpdate.postValue(true)
+                viewModel.liveIsUpdate.postValue(true)
                 return
             }
         }
-        mutableIsUpdate.postValue(false)
+        viewModel.liveIsUpdate.postValue(false)
     }
 
     @TaskResult(id = "onCreated")
@@ -118,13 +119,13 @@ class NotebookNameActivity : AppCompatActivity() {
         notebooks?.forEach {
             if(it != null && it?.name == text) {
                 MyApplication.evNotebook = it // グローバル変数のノートブック更新
-                mutableIsUpdate.postValue(true)
+                viewModel.liveIsUpdate.postValue(true)
                 Toast.makeText(this@NotebookNameActivity, getString(R.string.success_create_notebook, text), Toast.LENGTH_LONG).show()
                 finish()
                 return
             }
         }
-        mutableIsUpdate.postValue(false)
+        viewModel.liveIsUpdate.postValue(false)
         Toast.makeText(this@NotebookNameActivity, getString(R.string.failed_create_notebook, text), Toast.LENGTH_LONG).show()
 
     }
