@@ -64,6 +64,7 @@ class MapGalleryView : RecyclerView {
         private fun onBindViewHolder(holder: ImageCellViewHolder, position: Int) {
             val data = items[position]
             holder.binding.apply{
+                // FIXME binding内でのextensionの使用
                 filePath = data.filePath
                 postalCode = data.address.extractPostalCode()
                 address = data.address.eliminatePostalCode()

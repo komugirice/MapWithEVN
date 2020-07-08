@@ -33,6 +33,7 @@ class NotebookNameActivity : AppCompatActivity() {
         setContentView(R.layout.activity_notebook_name)
 
         viewModel = ViewModelProviders.of(this).get(NotebookNameViewModel::class.java).apply {
+            activity = this@NotebookNameActivity
             // onFindNotebooksの監視
             liveIsUpdate.observe(this@NotebookNameActivity, Observer{
                 val notebookName = notebookNameEditText.text.toString().trim()
@@ -45,19 +46,7 @@ class NotebookNameActivity : AppCompatActivity() {
                         .setMessage(getString(R.string.alert_create_notebook, notebookName))
                         .setPositiveButton(R.string.yes, object : DialogInterface.OnClickListener {
                             override fun onClick(dialog: DialogInterface?, which: Int) {
-                                // ノートブック新規作成
-                                val notebook = Notebook().apply{
-                                    this.name = notebookName
-                                }
-                                CoroutineScope(Dispatchers.IO).launch {
-                                    noteStoreClient.createNotebook(notebook)
-                                }
-                                Prefs().notebookName.put(notebookName)
-                                // 検索で使えない
-                                //MyApplication.evNotebook = notebook
-                                // notebook取得
-                                FindNotebooksTask().start(this@NotebookNameActivity, "onCreated");
-
+                                viewModel.callOnCreateNotebook(notebookName)
                             }
                         })
                         .setNeutralButton(R.string.no, object : DialogInterface.OnClickListener {
