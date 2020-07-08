@@ -18,19 +18,6 @@ abstract class BaseActivity : AppCompatActivity() {
 
     private var progressDialog: MaterialDialog? = null
 
-    /**
-     * hideKeybordメソッド
-     *
-     */
-    protected fun hideKeybord(view: View) {
-        (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
-            view.windowToken,
-            InputMethodManager.HIDE_NOT_ALWAYS
-        )
-    }
-
-
-
     protected fun showProgressDialog(context: Context){
         dismissProgressDialog()
         this.progressDialog =  MaterialDialog(context).apply {
