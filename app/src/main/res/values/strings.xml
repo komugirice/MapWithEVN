@@ -43,7 +43,7 @@
     <string name="pos_info_view">位置マーカーを\n設定して下さい</string>
     <string name="pos_marker_snippet">この位置に登録します</string>
     <string name="notebook_name">ノートブック名</string>
-    <string name="failed_evernote_connect">Evernote連携に失敗しました</string>
+    <string name="failed_evernote_connect">キャンセルされた、もしくはEvernote連携に失敗しました</string>
     <string name="exception_evernote_upload_amount">Evernoteアカウントのアップロード容量の上限に達しました</string>
     <string name="exception_evernote_api">API実行中に予期せぬエラーが発生しました</string>
     <string name="no_evernote_notebook">設定画面でノートブックを設定して下さい</string>

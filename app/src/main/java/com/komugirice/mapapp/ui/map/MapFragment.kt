@@ -7,6 +7,7 @@ import android.content.Intent
 import android.location.Location
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
 import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
@@ -132,8 +133,10 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
         viewModel = ViewModelProviders.of(this).get(MapFragmentViewModel::class.java).apply {
             context = context
             items.observe(viewLifecycleOwner, Observer {
-                galleryView.customAdapter.refresh(it)
-                swipeRefreshLayout.isRefreshing = false
+                Handler().postDelayed({
+                    galleryView.customAdapter.refresh(it)
+                    swipeRefreshLayout.isRefreshing = false
+                }, 300L)
             })
         }
 

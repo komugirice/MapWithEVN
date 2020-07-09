@@ -2,6 +2,7 @@ package com.komugirice.mapapp.ui.notebook
 
 import android.app.Activity
 import android.content.Context
+import android.os.Handler
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.evernote.client.android.EvernoteSession
@@ -31,7 +32,11 @@ class NotebookNameViewModel: ViewModel() {
         Prefs().notebookName.put(notebookName)
         // 検索で使えない
         //MyApplication.evNotebook = notebook
-        // notebook取得
-        FindNotebooksTask().start(activity, "onCreated");
+
+        //失敗エラーが発生するバグ対応
+        Handler().postDelayed({
+            // notebook取得
+            FindNotebooksTask().start(activity, "onCreated");
+        }, 1000L)
     }
 }
