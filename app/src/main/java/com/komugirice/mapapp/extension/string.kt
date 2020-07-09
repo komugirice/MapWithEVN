@@ -1,6 +1,7 @@
 package com.komugirice.mapapp.extension
 
 import android.util.Patterns
+import androidx.databinding.BindingAdapter
 import timber.log.Timber
 import java.text.ParseException
 import java.text.SimpleDateFormat

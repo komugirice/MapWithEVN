@@ -48,6 +48,7 @@
     <string name="exception_evernote_api">API実行中に予期せぬエラーが発生しました</string>
     <string name="no_evernote_notebook">設定画面でノートブックを設定して下さい</string>
     <string name="confirm_delete">削除してよろしいですか</string>
+    <string name="alert_gallery_empty">登録件数が0件か、取得に失敗しました</string>
 </resources>
 
 
