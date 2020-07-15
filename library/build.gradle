@@ -29,14 +29,15 @@ android {
         versionName rootProject.ext.VERSION_NAME
         versionCode rootProject.ext.VERSION_CODE
 
-        def properties = new Properties()
-        properties.load(rootProject.file('key.properties').newDataInputStream())
-        // local.propertiesのapi_keyに定義されている値を読み込む
-        def CONSUMER_KEY = properties.getProperty("CONSUMER_KEY")
-        def CONSUMER_SECRET = properties.getProperty("CONSUMER_SECRET")
-        // ついでにbuildConfigFieldに定義
-        buildConfigField("String", "CONSUMER_KEY", "\"${CONSUMER_KEY}\"")
-        buildConfigField("String", "CONSUMER_SECRET", "\"${CONSUMER_SECRET}\"")
+        // バグ修正 Program type already present: com.evernote.androidsdk.BuildConfig
+//        def properties = new Properties()
+//        properties.load(rootProject.file('key.properties').newDataInputStream())
+//        // local.propertiesのapi_keyに定義されている値を読み込む
+//        def CONSUMER_KEY = properties.getProperty("CONSUMER_KEY")
+//        def CONSUMER_SECRET = properties.getProperty("CONSUMER_SECRET")
+//        // ついでにbuildConfigFieldに定義
+//        buildConfigField("String", "CONSUMER_KEY", "\"${CONSUMER_KEY}\"")
+//        buildConfigField("String", "CONSUMER_SECRET", "\"${CONSUMER_SECRET}\"")
 
     }
 
