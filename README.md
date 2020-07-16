@@ -14,3 +14,6 @@ Androidアプリケーション<br>
 ・Kotlin<br>
 ・MVVM<br>
 ・Coroutine<br>
+
+## ※Google Playにベータ版を公開しました
+https://play.google.com/store/apps/details?id=com.komugirice.mapapp
