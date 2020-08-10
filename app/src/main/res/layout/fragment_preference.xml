@@ -9,221 +9,231 @@
         android:id="@+id/header"
         layout="@layout/activity_header" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/contents"
+    <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:paddingStart="16dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/header">
 
-        <TextView
-            android:id="@+id/modeLabel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="left"
-            android:text="@string/menu_mode"
-            android:textColor="@android:color/black"
-            android:textSize="@dimen/sp_m"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <Spinner
-            android:id="@+id/modeValue"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:gravity="left"
-            android:layout_marginTop="16dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/modeLabel" />
-
-        <TextView
-            android:id="@+id/modeLine"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/contents"
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="8dp"
-            android:background="@color/gainsboro"
+            android:layout_height="match_parent"
+            android:paddingStart="16dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/modeValue" />
+            app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/evernoteLabel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="left"
-            android:text="@string/evernote_label"
-            android:textColor="@android:color/black"
-            android:textSize="@dimen/sp_m"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/modeLine" />
+            <TextView
+                android:id="@+id/modeLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="left"
+                android:text="@string/menu_mode"
+                android:textColor="@android:color/black"
+                android:textSize="@dimen/sp_m"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/evernoteValue"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:gravity="left"
-            android:text="@string/none"
-            android:textSize="@dimen/sp_m"
-            android:textColor="@color/royal_blue"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/evernoteLabel" />
+            <Spinner
+                android:id="@+id/modeValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="left"
+                android:textSize="16sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/modeLabel" />
 
-        <TextView
-            android:id="@+id/evernoteLine"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="8dp"
-            android:background="@color/gainsboro"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/evernoteValue" />
+            <TextView
+                android:id="@+id/modeLine"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="8dp"
+                android:background="@color/gainsboro"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/modeValue" />
 
-        <TextView
-            android:id="@+id/notebookLabel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="left"
-            android:text="@string/notebook_label"
-            android:textColor="@android:color/black"
-            android:textSize="@dimen/sp_m"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/evernoteLine" />
+            <TextView
+                android:id="@+id/evernoteLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="left"
+                android:text="@string/evernote_label"
+                android:textColor="@android:color/black"
+                android:textSize="@dimen/sp_m"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/modeLine" />
 
-        <TextView
-            android:id="@+id/notebookValue"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:gravity="left"
-            android:text="@string/none"
-            android:textColor="@color/royal_blue"
-            android:textSize="@dimen/sp_m"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/notebookLabel" />
+            <TextView
+                android:id="@+id/evernoteValue"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="left"
+                android:text="@string/none"
+                android:textColor="@color/royal_blue"
+                android:textSize="@dimen/sp_m"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/evernoteLabel" />
 
-        <TextView
-            android:id="@+id/notebookLine"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="8dp"
-            android:background="@color/gainsboro"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/notebookValue" />
+            <TextView
+                android:id="@+id/evernoteLine"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="8dp"
+                android:background="@color/gainsboro"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/evernoteValue" />
 
-        <TextView
-            android:id="@+id/syncLabel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:gravity="left"
-            android:text="@string/sync_label"
-            android:textColor="@android:color/black"
-            android:textSize="@dimen/sp_m"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/notebookLine" />
-        <TextView
-            android:id="@+id/syncCacheToEvLabel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="left"
-            android:text="@string/sync_cache_to_ev_label"
-            android:textColor="@android:color/black"
-            android:textSize="@dimen/sp_s"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/syncLabel" />
+            <TextView
+                android:id="@+id/notebookLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="left"
+                android:text="@string/notebook_label"
+                android:textColor="@android:color/black"
+                android:textSize="@dimen/sp_m"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/evernoteLine" />
 
-        <TextView
-            android:id="@+id/syncPerfectCacheToEv"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="left"
-            android:text="@string/sync_perfect"
-            android:textSize="@dimen/sp_m"
-            android:textColor="@color/royal_blue"
-            app:layout_constraintEnd_toStartOf="@+id/syncDiffCacheToEv"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/syncCacheToEvLabel" />
+            <TextView
+                android:id="@+id/notebookValue"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="left"
+                android:text="@string/none"
+                android:textColor="@color/royal_blue"
+                android:textSize="@dimen/sp_m"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/notebookLabel" />
 
-        <TextView
-            android:id="@+id/syncDiffCacheToEv"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="left"
-            android:text="@string/sync_difference"
-            android:textSize="@dimen/sp_m"
-            android:textColor="@color/royal_blue"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/syncPerfectCacheToEv"
-            app:layout_constraintTop_toBottomOf="@+id/syncCacheToEvLabel" />
+            <TextView
+                android:id="@+id/notebookLine"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="8dp"
+                android:background="@color/gainsboro"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/notebookValue" />
+
+            <TextView
+                android:id="@+id/syncLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:gravity="left"
+                android:text="@string/sync_label"
+                android:textColor="@android:color/black"
+                android:textSize="@dimen/sp_m"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/notebookLine" />
+
+            <TextView
+                android:id="@+id/syncCacheToEvLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="left"
+                android:text="@string/sync_cache_to_ev_label"
+                android:textColor="@android:color/black"
+                android:textSize="@dimen/sp_s"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/syncLabel" />
+
+            <TextView
+                android:id="@+id/syncPerfectCacheToEv"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="left"
+                android:text="@string/sync_perfect"
+                android:textColor="@color/royal_blue"
+                android:textSize="@dimen/sp_m"
+                app:layout_constraintEnd_toStartOf="@+id/syncDiffCacheToEv"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/syncCacheToEvLabel" />
+
+            <TextView
+                android:id="@+id/syncDiffCacheToEv"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="left"
+                android:text="@string/sync_difference"
+                android:textColor="@color/royal_blue"
+                android:textSize="@dimen/sp_m"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/syncPerfectCacheToEv"
+                app:layout_constraintTop_toBottomOf="@+id/syncCacheToEvLabel" />
 
 
-        <TextView
-            android:id="@+id/syncCacheToEvLine"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="16dp"
-            android:background="@color/gainsboro"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/syncPerfectCacheToEv" />
+            <TextView
+                android:id="@+id/syncCacheToEvLine"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="16dp"
+                android:background="@color/gainsboro"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/syncPerfectCacheToEv" />
 
-        <TextView
-            android:id="@+id/syncEvToCacheLabel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:gravity="left"
-            android:text="@string/sync_ev_to_cache_label"
-            android:textColor="@android:color/black"
-            android:textSize="@dimen/sp_s"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/syncCacheToEvLine" />
+            <TextView
+                android:id="@+id/syncEvToCacheLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="left"
+                android:text="@string/sync_ev_to_cache_label"
+                android:textColor="@android:color/black"
+                android:textSize="@dimen/sp_s"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/syncCacheToEvLine" />
 
-        <TextView
-            android:id="@+id/syncPerfectEvToCache"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="left"
-            android:text="@string/sync_perfect"
-            android:textColor="@color/royal_blue"
-            android:textSize="@dimen/sp_m"
-            app:layout_constraintEnd_toStartOf="@+id/syncDiffEvToCache"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/syncEvToCacheLabel" />
+            <TextView
+                android:id="@+id/syncPerfectEvToCache"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="left"
+                android:text="@string/sync_perfect"
+                android:textColor="@color/royal_blue"
+                android:textSize="@dimen/sp_m"
+                app:layout_constraintEnd_toStartOf="@+id/syncDiffEvToCache"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/syncEvToCacheLabel" />
 
-        <TextView
-            android:id="@+id/syncDiffEvToCache"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="left"
-            android:text="@string/sync_difference"
-            android:textColor="@color/royal_blue"
-            android:textSize="@dimen/sp_m"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/syncPerfectEvToCache"
-            app:layout_constraintTop_toBottomOf="@+id/syncEvToCacheLabel" />
+            <TextView
+                android:id="@+id/syncDiffEvToCache"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="left"
+                android:text="@string/sync_difference"
+                android:textColor="@color/royal_blue"
+                android:textSize="@dimen/sp_m"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/syncPerfectEvToCache"
+                app:layout_constraintTop_toBottomOf="@+id/syncEvToCacheLabel" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
