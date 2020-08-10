@@ -38,10 +38,15 @@ class MapGalleryView : RecyclerView {
     class Adapter(val context: Context) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val items = mutableListOf<EvImageData>()
 
+        // スワイプ更新中に「検索結果が0件です」を出さない為の対応
+        var hasCompletedFirstRefresh = false
+
         lateinit var onClickCallBack: (EvImageData) -> Unit
 
 
         fun refresh(list: List<EvImageData>) {
+            // リフレッシュ実行フラグON
+            hasCompletedFirstRefresh = true
             items.apply {
                 clear()
                 addAll(list)
@@ -50,11 +55,20 @@ class MapGalleryView : RecyclerView {
         }
 
         fun clear() {
+            // 上スワイプで「検索結果0件」表示のバグ対応
+            hasCompletedFirstRefresh = false
             items.clear()
             notifyDataSetChanged()
         }
 
-        override fun getItemCount(): Int = if(items.isEmpty()) 1 else items.size
+        override fun getItemCount(): Int {
+            return if (items.isEmpty()) {
+                if (hasCompletedFirstRefresh)
+                    1
+                else
+                    0
+            } else items.size
+        }
 
         override fun getItemViewType(position: Int): Int {
             return if(items.isEmpty()) VIEW_TYPE_EMPTY else VIEW_TYPE_GALLERY

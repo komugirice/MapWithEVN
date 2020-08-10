@@ -212,6 +212,7 @@ class MapFragment : BaseFragment(), OnMapReadyCallback, Update {
         closeGallery.setOnClickListener{
             galleryGroup.visibility = View.GONE
             buttonGroup.visibility = View.VISIBLE
+            galleryView.customAdapter.clear()
         }
 
         // 写真ボタンクリック時

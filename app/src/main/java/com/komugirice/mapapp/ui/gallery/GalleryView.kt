@@ -59,11 +59,11 @@ class GalleryView : RecyclerView {
         override fun getItemCount(): Int = if(items.isEmpty()) 1 else items.size
 
         override fun getItemViewType(position: Int): Int {
-            return if(items.isEmpty()) MapGalleryView.VIEW_TYPE_EMPTY else MapGalleryView.VIEW_TYPE_GALLERY
+            return if(items.isEmpty()) VIEW_TYPE_EMPTY else VIEW_TYPE_GALLERY
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-                if(viewType == MapGalleryView.VIEW_TYPE_GALLERY) {
+                if(viewType == VIEW_TYPE_GALLERY) {
                     return ImageCellViewHolder(ImageCellBinding.inflate(LayoutInflater.from(context), parent, false))
                 } else {
                     // Emptyセル
